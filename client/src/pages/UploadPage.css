@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=SuperBubble&display=swap');
+
+.welcome-title-container {
+  text-align: center;
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.welcome-title {
+  font-family: 'SuperBubble', cursive;
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #fb5607;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Hide on mobile */
+@media (max-width: 767px) {
+  .welcome-title {
+    display: none;
+  }
+}
+
+/* Responsive scaling for large screens */
+@media (min-width: 1200px) {
+  .welcome-title {
+    font-size: 3rem;
+  }
+}
