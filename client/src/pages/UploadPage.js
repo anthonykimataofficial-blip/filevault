@@ -44,12 +44,18 @@ function UploadPage() {
     formData.append("password", password);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/upload", formData);
-      setUploadResult(res.data);
-    } catch (err) {
-      console.error("Upload error:", err.response?.data || err.message);
-      alert("Upload failed.");
-    }
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+  const res = await axios.post(`${API_BASE}/api/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  setUploadResult(res.data);
+} catch (err) {
+  console.error("Upload error:", err.response?.data || err.message);
+  alert("Upload failed.");
+}
+
   };
 
   const handleCopy = () => {
