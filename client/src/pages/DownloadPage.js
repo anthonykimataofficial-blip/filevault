@@ -14,8 +14,13 @@ function DownloadPage() {
     setSuccess(false);
 
     try {
+      // ✅ Use live backend in production and localhost for local dev
+      const API_BASE =
+        process.env.REACT_APP_API_URL ||
+        "https://filevault-backend-a7w4.onrender.com";
+
       const response = await axios.post(
-        `http://localhost:5000/api/download/${fileId}`,
+        `${API_BASE}/api/download/${fileId}`,
         { password },
         { responseType: 'blob' }
       );
