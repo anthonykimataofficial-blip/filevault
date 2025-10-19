@@ -9,7 +9,7 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute'; // ✅ New
 
 function App() {
   return (
-    <Router>
+    <Router basename="/">
       <Routes>
         <Route path="/" element={<UploadPage />} />
         <Route path="/download/:fileId" element={<DownloadPage />} />
@@ -25,6 +25,9 @@ function App() {
             </ProtectedAdminRoute>
           }
         />
+
+        {/* ✅ Catch-all route (prevents 404s on reloads in Vercel) */}
+        <Route path="*" element={<UploadPage />} />
       </Routes>
     </Router>
   );

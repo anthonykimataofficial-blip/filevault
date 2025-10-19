@@ -16,6 +16,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// ✅ Detect environment and use proper frontend URL
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 router.post('/', upload.single('file'), async (req, res) => {
   const { password, expiresIn } = req.body;
 
@@ -45,15 +48,15 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     await file.save();
 
-    // ✅ Send back preview and download links using _id
+    // ✅ Send back preview and download links using the correct domain
     res.json({
       message: 'File uploaded successfully',
       fileId: file._id,
-      previewLink: `http://localhost:3000/preview/${file._id}`,
-      downloadLink: `http://localhost:3000/download/${file._id}`
+      previewLink: `${FRONTEND_URL}/preview/${file._id}`,
+      downloadLink: `${FRONTEND_URL}/download/${file._id}`
     });
   } catch (err) {
-    console.error(err);
+    console.error('❌ Upload error:', err);
     res.status(500).json({ error: 'Server error while uploading' });
   }
 });
