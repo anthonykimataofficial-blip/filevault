@@ -9,11 +9,16 @@ const PreviewPage = () => {
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/file/${fileId}`);
+        // ✅ Use live backend when deployed, localhost in dev
+        const API_BASE =
+          process.env.REACT_APP_API_URL ||
+          "https://filevault-backend-a7w4.onrender.com";
+
+        const res = await fetch(`${API_BASE}/api/file/${fileId}`);
         if (!res.ok) throw new Error('File not found or expired');
         const data = await res.json();
 
-        await fetch(`http://localhost:5000/api/file/${fileId}/view`, {
+        await fetch(`${API_BASE}/api/file/${fileId}/view`, {
           method: 'POST',
         });
 
@@ -123,6 +128,7 @@ const PreviewPage = () => {
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
         <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
+            {/* ✅ Fixed logo path */}
             <img
               src="/logo.png"
               alt="Logo"
