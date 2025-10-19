@@ -32,31 +32,33 @@ function UploadPage() {
     }
   };
 
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file || !password) {
-      alert("Both file and password are required.");
-      return;
-    }
+ const handleUpload = async (e) => {
+  e.preventDefault();
+  if (!file || !password) {
+    alert("Both file and password are required.");
+    return;
+  }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("password", password);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("password", password);
 
-    try {
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  try {
+    // ✅ Use the live backend in production, and localhost during local dev
+    const API_BASE =
+      process.env.REACT_APP_API_URL ||
+      "https://filevault-backend-a7w4.onrender.com";
 
-  const res = await axios.post(`${API_BASE}/api/upload`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+    const res = await axios.post(`${API_BASE}/api/upload`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
-  setUploadResult(res.data);
-} catch (err) {
-  console.error("Upload error:", err.response?.data || err.message);
-  alert("Upload failed.");
-}
-
-  };
+    setUploadResult(res.data);
+  } catch (err) {
+    console.error("Upload error:", err.response?.data || err.message);
+    alert("Upload failed.");
+  }
+};
 
   const handleCopy = () => {
     if (uploadResult?.fileId) {
@@ -91,13 +93,14 @@ function UploadPage() {
       <nav className="navbar navbar-light bg-light shadow-sm position-relative">
         <div className="container d-flex justify-content-between align-items-center">
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
-            <img
-              src="/logo.png"
-              alt="Logo"
-              width="60"
-              height="60"
-              className="d-inline-block align-top me-2"
-            />
+           <img
+  src="logo.png"
+  alt="Logo"
+  width="60"
+  height="60"
+  className="d-inline-block align-top me-2"
+/>
+
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>vooli</div>
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
@@ -182,15 +185,16 @@ function UploadPage() {
                   e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
                 }}
               >
-                <a
-                  href={`/preview/${uploadResult.fileId}`}
-                  className="text-decoration-none"
-                  style={{ color: '#0077b6' }} // ocean blue link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  http://localhost:3000/preview/{uploadResult.fileId}
-                </a>
+               <a
+  href={`${window.location.origin}/preview/${uploadResult.fileId}`}
+  className="text-decoration-none"
+  style={{ color: '#0077b6' }}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  {`${window.location.origin}/preview/${uploadResult.fileId}`}
+</a>
+
               </div>
 
               <div className="d-flex justify-content-center mt-3">
