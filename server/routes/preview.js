@@ -3,6 +3,9 @@ const router = express.Router();
 const File = require('../models/File');
 const path = require('path');
 
+// ✅ Base URL — dynamic for local + production
+const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+
 // ✅ GET: Fetch file metadata (no view increment)
 router.get('/:id', async (req, res) => {
   try {
@@ -14,6 +17,9 @@ router.get('/:id', async (req, res) => {
       return res.status(410).json({ error: 'Link has expired' });
     }
 
+    // ✅ Use full backend URL for file access
+    const fileUrl = `${BACKEND_URL}/files/${encodeURIComponent(file.storedName)}`;
+
     // ✅ Respond with full metadata
     res.json({
       originalName: file.originalName,
@@ -22,7 +28,7 @@ router.get('/:id', async (req, res) => {
       createdAt: file.createdAt,
       expiresAt: file.expiresAt,
       ext: path.extname(file.storedName).slice(1), // removes dot
-      url: `http://localhost:5000/files/${file.storedName}`,
+      url: fileUrl,
       views: file.views || 0,
       downloads: file.downloads || 0,
       previewLink: `/preview/${file._id}`,
