@@ -9,9 +9,14 @@ function AdminLoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/login', {
+      // ✅ Use environment variable in production, fallback to localhost for local testing
+      const API_BASE =
+        process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
