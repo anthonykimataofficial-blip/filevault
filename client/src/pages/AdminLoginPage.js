@@ -13,8 +13,9 @@ function AdminDashboardPage() {
   const token = localStorage.getItem('adminToken');
   const navigate = useNavigate();
 
-  // ✅ Use environment variable for online backend
-  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  // ✅ Use live backend when deployed, local when in dev
+  const API_BASE =
+    process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('adminToken');
