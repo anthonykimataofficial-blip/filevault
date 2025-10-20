@@ -1,238 +1,78 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function AdminDashboardPage() {
-  const [files, setFiles] = useState([]);
+function AdminLoginPage() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [stats, setStats] = useState({ total: 0, views: 0, downloads: 0, sizeMB: 0 });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filesPerPage] = useState(10);
-  const [search, setSearch] = useState('');
-  const [fileTypeFilter, setFileTypeFilter] = useState('');
-
-  const token = localStorage.getItem('adminToken');
   const navigate = useNavigate();
 
-  // ✅ Use live backend when deployed, local when in dev
+  // ✅ Use live backend in production, local when in dev
   const API_BASE =
     process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
 
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('adminToken');
-    navigate('/admin/login', { replace: true });
-  }, [navigate]);
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
-  const fetchFiles = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/files`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      console.log('🌐 API Base:', API_BASE); // sanity check in console
 
-      if (res.status === 403 || res.status === 401) {
-        handleLogout();
-        return;
-      }
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
       const data = await res.json();
 
       if (data.success) {
-        setFiles(data.files);
-
-        const total = data.files.length;
-        const views = data.files.reduce((acc, file) => acc + (file.views || 0), 0);
-        const downloads = data.files.reduce((acc, file) => acc + (file.downloads || 0), 0);
-        const sizeMB = data.files.reduce((acc, file) => acc + file.fileSize, 0) / (1024 * 1024);
-
-        setStats({ total, views, downloads, sizeMB });
+        localStorage.setItem('adminToken', data.token);
+        navigate('/admin/dashboard');
       } else {
-        setError(data.message || 'Failed to fetch files.');
+        setError(data.message || 'Login failed');
       }
     } catch (err) {
-      console.error('❌ Failed to fetch files', err);
-      setError(err.message || 'Server error');
-    }
-  }, [API_BASE, token, handleLogout]);
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/admin/login', { replace: true });
-      return;
-    }
-    fetchFiles();
-  }, [token, fetchFiles, navigate]);
-
-  const handleDelete = async (fileId) => {
-    if (!window.confirm('Are you sure you want to delete this file?')) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/files/${fileId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setFiles((prev) => prev.filter((file) => file._id !== fileId));
-        fetchFiles();
-      } else {
-        alert('Delete failed: ' + data.message);
-      }
-    } catch {
-      alert('Server error while deleting.');
+      console.error('Login error:', err);
+      setError('Server error. Try again.');
     }
   };
 
-  const filteredFiles = files.filter((file) => {
-    const matchesSearch = file.originalName.toLowerCase().includes(search.toLowerCase());
-    const matchesType = fileTypeFilter ? file.fileType === fileTypeFilter : true;
-    return matchesSearch && matchesType;
-  });
-
-  const indexOfLastFile = currentPage * filesPerPage;
-  const indexOfFirstFile = indexOfLastFile - filesPerPage;
-  const currentFiles = filteredFiles.slice(indexOfFirstFile, indexOfLastFile);
-  const totalPages = Math.ceil(filteredFiles.length / filesPerPage);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const uniqueFileTypes = [...new Set(files.map((f) => f.fileType))];
-
   return (
-    <div className="container my-4">
-      {/* Top bar */}
-      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4">
-        <h2 className="mb-2 mb-sm-0">📊 Admin Dashboard</h2>
-        <button className="btn btn-outline-danger" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
+    <div className="d-flex align-items-center justify-content-center vh-100 bg-dark">
+      <div className="card p-4 shadow" style={{ width: '100%', maxWidth: '400px' }}>
+        <h4 className="text-center mb-3">🔐 Admin Login</h4>
+        {error && <div className="alert alert-danger">{error}</div>}
 
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {/* Filters */}
-      <div className="row g-3 mb-4">
-        <div className="col-12 col-md-6">
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Search by filename..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <div className="col-12 col-md-6">
-          <select
-            className="form-select"
-            value={fileTypeFilter}
-            onChange={(e) => setFileTypeFilter(e.target.value)}
-          >
-            <option value="">All File Types</option>
-            {uniqueFileTypes.map((type, idx) => (
-              <option key={idx} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="row g-3 mb-4">
-        <div className="col-6 col-sm-6 col-md-3">
-          <div className="card text-white bg-primary">
-            <div className="card-body">
-              <h5>Total Files</h5>
-              <p className="fs-4 mb-0">{stats.total}</p>
-            </div>
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
           </div>
-        </div>
-        <div className="col-6 col-sm-6 col-md-3">
-          <div className="card text-white bg-success">
-            <div className="card-body">
-              <h5>Total Views</h5>
-              <p className="fs-4 mb-0">{stats.views}</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-6 col-sm-6 col-md-3">
-          <div className="card text-white bg-warning">
-            <div className="card-body">
-              <h5>Total Downloads</h5>
-              <p className="fs-4 mb-0">{stats.downloads}</p>
-            </div>
-          </div>
-        </div>
-        <div className="col-6 col-sm-6 col-md-3">
-          <div className="card text-white bg-dark">
-            <div className="card-body">
-              <h5>Total Size (MB)</h5>
-              <p className="fs-4 mb-0">{stats.sizeMB.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* File List */}
-      <div className="table-responsive">
-        <table className="table table-bordered table-hover align-middle">
-          <thead className="table-dark">
-            <tr>
-              <th>Original Name</th>
-              <th>Type</th>
-              <th>Size (KB)</th>
-              <th>Views</th>
-              <th>Downloads</th>
-              <th>Uploaded</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentFiles.map((file) => (
-              <tr key={file._id}>
-                <td>{file.originalName}</td>
-                <td>{file.fileType}</td>
-                <td>{(file.fileSize / 1024).toFixed(2)}</td>
-                <td>{file.views}</td>
-                <td>{file.downloads}</td>
-                <td>{new Date(file.createdAt).toLocaleString()}</td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-danger"
-                    onClick={() => handleDelete(file._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {currentFiles.length === 0 && (
-              <tr>
-                <td colSpan="7" className="text-center">
-                  No files found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          <div className="mb-3">
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-      {/* Pagination */}
-      <nav>
-        <ul className="pagination flex-wrap justify-content-center">
-          {Array.from({ length: totalPages }, (_, index) => (
-            <li
-              key={index + 1}
-              className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
-            >
-              <button className="page-link" onClick={() => paginate(index + 1)}>
-                {index + 1}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+          <button type="submit" className="btn btn-primary w-100">Login</button>
+        </form>
+      </div>
     </div>
   );
 }
 
-export default AdminDashboardPage;
+export default AdminLoginPage;
