@@ -11,6 +11,8 @@ function AdminLoginPage() {
   const API_BASE =
     process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
 
+    console.log("🔍 Effective API Base:", API_BASE);
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
