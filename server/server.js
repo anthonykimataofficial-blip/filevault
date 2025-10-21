@@ -8,10 +8,25 @@ const path = require('path');
 const File = require('./models/File');
 
 const app = express();
+const allowedOrigins = [
+  'https://filevault-e963uqcdi-anthony-kimatas-projects.vercel.app', // ✅ your Vercel frontend
+  'http://localhost:3000' // ✅ local dev
+];
+
 app.use(cors({
-  origin: '*', // Allow all origins (for now)
-  methods: ['GET', 'POST', 'DELETE']
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('❌ Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'DELETE', 'PUT'],
+  credentials: true
 }));
+
 app.use(express.json());
 
 // 🩵 Ensure uploads directory exists
