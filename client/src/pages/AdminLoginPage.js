@@ -9,7 +9,7 @@ function AdminLoginPage() {
 
   // ✅ Use live backend in production, local when in dev
   const API_BASE =
-    process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,11 +25,6 @@ function AdminLoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      // ⚠️ Handle connection or auth issues safely
-      if (!res.ok) {
-        throw new Error(`Server responded with ${res.status}`);
-      }
-
       const data = await res.json();
 
       if (data.success) {
@@ -39,8 +34,8 @@ function AdminLoginPage() {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      console.error('❌ Login error:', err);
-      setError('Unable to connect to backend. Please try again.');
+      console.error('Login error:', err);
+      setError('Server error. Try again.');
     }
   };
 

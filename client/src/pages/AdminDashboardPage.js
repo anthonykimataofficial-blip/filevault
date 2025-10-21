@@ -13,6 +13,10 @@ function AdminDashboardPage() {
   const token = localStorage.getItem('adminToken');
   const navigate = useNavigate();
 
+  // ✅ Automatically use live backend in production, local in dev
+  const API_BASE =
+    process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
+
   const handleLogout = useCallback(() => {
     localStorage.removeItem('adminToken');
     navigate('/admin/login', { replace: true });
@@ -20,8 +24,8 @@ function AdminDashboardPage() {
 
   const fetchFiles = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/admin/files', {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${API_BASE}/api/admin/files`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.status === 403 || res.status === 401) {
@@ -47,7 +51,7 @@ function AdminDashboardPage() {
       console.error('❌ Failed to fetch files', err);
       setError(err.message || 'Server error');
     }
-  }, [token, handleLogout]);
+  }, [API_BASE, token, handleLogout]);
 
   useEffect(() => {
     if (!token) {
@@ -61,15 +65,15 @@ function AdminDashboardPage() {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/files/${fileId}`, {
+      const res = await fetch(`${API_BASE}/api/admin/files/${fileId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data = await res.json();
 
       if (data.success) {
-        setFiles(prev => prev.filter(file => file._id !== fileId));
+        setFiles((prev) => prev.filter((file) => file._id !== fileId));
         fetchFiles();
       } else {
         alert('Delete failed: ' + data.message);
@@ -79,7 +83,7 @@ function AdminDashboardPage() {
     }
   };
 
-  const filteredFiles = files.filter(file => {
+  const filteredFiles = files.filter((file) => {
     const matchesSearch = file.originalName.toLowerCase().includes(search.toLowerCase());
     const matchesType = fileTypeFilter ? file.fileType === fileTypeFilter : true;
     return matchesSearch && matchesType;
@@ -91,11 +95,10 @@ function AdminDashboardPage() {
   const totalPages = Math.ceil(filteredFiles.length / filesPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const uniqueFileTypes = [...new Set(files.map(f => f.fileType))];
+  const uniqueFileTypes = [...new Set(files.map((f) => f.fileType))];
 
   return (
     <div className="container my-4">
-      {/* Top bar */}
       <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center mb-4">
         <h2 className="mb-2 mb-sm-0">📊 Admin Dashboard</h2>
         <button className="btn btn-outline-danger" onClick={handleLogout}>Logout</button>
@@ -103,7 +106,6 @@ function AdminDashboardPage() {
 
       {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Filters */}
       <div className="row g-3 mb-4">
         <div className="col-12 col-md-6">
           <input
@@ -111,14 +113,14 @@ function AdminDashboardPage() {
             className="form-control"
             placeholder="Search by filename..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="col-12 col-md-6">
           <select
             className="form-select"
             value={fileTypeFilter}
-            onChange={e => setFileTypeFilter(e.target.value)}
+            onChange={(e) => setFileTypeFilter(e.target.value)}
           >
             <option value="">All File Types</option>
             {uniqueFileTypes.map((type, idx) => (
@@ -128,7 +130,6 @@ function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="row g-3 mb-4">
         <div className="col-6 col-sm-6 col-md-3">
           <div className="card text-white bg-primary">
@@ -164,7 +165,6 @@ function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* File List */}
       <div className="table-responsive">
         <table className="table table-bordered table-hover align-middle">
           <thead className="table-dark">
@@ -206,7 +206,6 @@ function AdminDashboardPage() {
         </table>
       </div>
 
-      {/* Pagination */}
       <nav>
         <ul className="pagination flex-wrap justify-content-center">
           {Array.from({ length: totalPages }, (_, index) => (
