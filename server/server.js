@@ -67,7 +67,29 @@ app.use('/api/file', previewRoute); // For preview, view, password check
 app.use('/api/admin', adminRoute);  // ✅ Admin login route
 
 // ✅ Serve uploaded files publicly
-app.use('/files', express.static('uploads'));
+// ✅ Serve uploaded files publicly with proper headers for media playback
+app.use('/files', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('uploads', {
+  setHeaders: (res, path) => {
+    const ext = path.split('.').pop().toLowerCase();
+    const mimeMap = {
+      mp3: 'audio/mpeg',
+      wav: 'audio/wav',
+      mp4: 'video/mp4',
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      pdf: 'application/pdf'
+    };
+    if (mimeMap[ext]) {
+      res.setHeader('Content-Type', mimeMap[ext]);
+    }
+  }
+}));
+
 
 // 🕒 Auto-delete expired files every hour
 setInterval(async () => {
