@@ -1,47 +1,38 @@
-// server/routes/upload.js
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const File = require('../models/File');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const { Readable } = require('stream');
+const { v2: cloudinary } = require('cloudinary');
+const fs = require('fs');
+const path = require('path');
 
-// ✅ Cloudinary configuration
+// ✅ Frontend base URL
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// ✅ Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+// ✅ Multer temp storage (in memory)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/'),
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+    cb(null, uniqueName);
+  }
+});
 
-// ✅ Multer memory storage (so files are not saved locally)
-const storage = multer.memoryStorage();
+// ✅ Increase file size limit to 100MB
 const upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
 });
 
-// ✅ Helper to upload buffer directly to Cloudinary
-const uploadToCloudinary = (buffer, folder, originalname) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: 'auto', // auto-detect (image, video, audio, etc.)
-        public_id: originalname.split('.')[0],
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    Readable.from(buffer).pipe(stream);
-  });
-};
-
-// ✅ Upload endpoint
+// ✅ Upload route
 router.post('/', upload.single('file'), async (req, res) => {
   const { password } = req.body;
 
@@ -50,41 +41,47 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 
   try {
-    // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ☁️ Upload to Cloudinary
-    const cloudResult = await uploadToCloudinary(
-      req.file.buffer,
-      'filevault_uploads',
-      req.file.originalname
-    );
+    // ⏳ Set expiration time to 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // ⏳ Set 24-hour expiry
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // ✅ Upload to Cloudinary
+    const cloudResult = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: 'auto', // handles pdf, mp3, mp4, etc.
+      folder: 'filevault_uploads',
+    });
 
-    // 💾 Save record in MongoDB
+    // ✅ Delete temp file from local after upload
+    fs.unlinkSync(req.file.path);
+
+    // ✅ Save file metadata to MongoDB
     const file = new File({
       originalName: req.file.originalname,
       storedName: cloudResult.public_id,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
-      filePath: cloudResult.secure_url, // now the Cloudinary URL
+      filePath: cloudResult.secure_url, // Cloudinary URL
       password: hashedPassword,
       expiresAt,
     });
 
     await file.save();
 
-    // ✅ Send response
+    // ✅ Return response
     res.json({
-      message: 'File uploaded successfully ☁️',
+      message: 'File uploaded successfully ✅',
       fileId: file._id,
       previewLink: `${FRONTEND_URL}/preview/${file._id}`,
-      downloadLink: `${FRONTEND_URL}/download/${file._id}`,
+      downloadLink: `${FRONTEND_URL}/download/${file._id}`
     });
   } catch (err) {
-    console.error('❌ Cloudinary upload error:', err);
+    console.error('❌ Upload error:', err);
+
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File too large. Max 100MB allowed.' });
+    }
+
     res.status(500).json({ error: 'Server error while uploading' });
   }
 });
