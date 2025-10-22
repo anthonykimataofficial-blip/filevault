@@ -122,24 +122,27 @@ function UploadPage() {
         <div className="container py-5" style={{ maxWidth: '600px' }}>
           <h2 className="text-center mb-4 text-white">📤 Secure File Uploader</h2>
 
-          {/* 💬 Playful translucent instruction box */}
+        {/* Playful translucent instruction box */}
 <div
-  className="mb-4 p-3 rounded"
   style={{
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    backdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    color: '#f8f9fa',
+    backgroundColor: 'rgba(10, 25, 75, 0.7)', // deeper blue with transparency
+    color: 'white',
+    borderRadius: '10px',
+    padding: '20px',
+    marginBottom: '25px',
+    backdropFilter: 'blur(6px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
     fontSize: '0.95rem',
-    lineHeight: '1.6',
   }}
 >
-  <h5 className="text-center mb-3">💡 How It Works</h5>
-  <ul style={{ marginBottom: 0 }}>
-    <li>📁 Upload <strong>documents, images, audio</strong> or <strong>video</strong> files.</li>
-    <li>🔒 Set a <strong>password</strong> to keep your file safe.</li>
-    <li>🚀 Click <strong>Upload</strong> and share the magic link.</li>
-    <li>🕐 Files auto-delete after <strong>24 hours</strong> (free plan).</li>
+  <p style={{ marginBottom: '8px', fontWeight: '600', fontSize: '1.1rem' }}>
+    ⚡ Quick Guide:
+  </p>
+  <ul style={{ listStyleType: 'none', paddingLeft: '0', marginBottom: '0' }}>
+    <li>📁 Upload documents, images, audio, or video (max 50 MB)</li>
+    <li>🔑 Set a password to protect your file</li>
+    <li>📬 Click <strong>Upload</strong> and copy your private link</li>
+    <li>🕒 Files auto-delete after <strong>24 hours</strong></li>
   </ul>
 </div>
 
