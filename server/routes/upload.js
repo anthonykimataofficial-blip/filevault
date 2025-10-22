@@ -1,12 +1,15 @@
-// server/routes/upload.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const File = require('../models/File'); // ✅ import the model
+const fs = require('fs');
+const File = require('../models/File');
 
-// Multer setup for file upload
+// ✅ Frontend base URL
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+// ✅ Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
@@ -14,28 +17,27 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   }
 });
-const upload = multer({ storage });
 
-// ✅ Detect environment and use proper frontend URL
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+// ✅ Limit file size to 50MB
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
 
+// ✅ Upload route
 router.post('/', upload.single('file'), async (req, res) => {
-  const { password, expiresIn } = req.body;
+  const { password } = req.body;
 
   if (!req.file || !password) {
     return res.status(400).json({ error: 'File and password are required' });
   }
 
   try {
-    // 🔐 Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ⏳ Optional expiration logic
-    const expiresAt = expiresIn
-      ? new Date(Date.now() + parseInt(expiresIn) * 60 * 1000)
-      : null;
+    // ⏳ Set expiration time to 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // 💾 Save to MongoDB
     const file = new File({
       originalName: req.file.originalname,
       storedName: req.file.filename,
@@ -48,7 +50,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     await file.save();
 
-    // ✅ Send back preview and download links using the correct domain
+    // ✅ Return response
     res.json({
       message: 'File uploaded successfully',
       fileId: file._id,

@@ -65,6 +65,26 @@ app.use('/api/admin', adminRoute);  // ✅ Admin login route
 // ✅ Serve uploaded files publicly
 app.use('/files', express.static('uploads'));
 
+// 🕒 Auto-delete expired files every hour
+setInterval(async () => {
+  const now = new Date();
+  try {
+    const expiredFiles = await File.find({ expiresAt: { $lte: now } });
+    for (const file of expiredFiles) {
+      try {
+        fs.unlinkSync(file.filePath); // remove from disk
+        await file.deleteOne();       // remove from MongoDB
+        console.log(`🗑️ Deleted expired file: ${file.originalName}`);
+      } catch (err) {
+        console.error(`❌ Error deleting file ${file._id}:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error during cleanup:', err.message);
+  }
+}, 60 * 60 * 1000); // runs every hour
+
+
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
