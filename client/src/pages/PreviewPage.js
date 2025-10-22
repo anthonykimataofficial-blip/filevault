@@ -59,104 +59,60 @@ const PreviewPage = () => {
   const lowerExt = ext.toLowerCase();
 
   const renderPreview = () => {
-    const previewStyle = {
-      width: '100%',
-      maxHeight: '80vh',
-      border: 'none',
-      backgroundColor: '#f8f9fa',
-      zIndex: 2,
-      display: 'block',
-      margin: '0 auto',
-      borderRadius: '8px',
-      boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-    };
-
-    // 📄 Unified preview for PDF, DOCX, PPTX
     if (['pdf', 'docx', 'pptx'].includes(lowerExt)) {
       return (
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <iframe
-            src={
-              lowerExt === 'pdf'
-                ? url
-                : `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
-            }
-            style={previewStyle}
-            title="Document Preview"
-          />
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#777', marginTop: '10px' }}>
-            🔒 View only — download requires password.
-          </p>
-        </div>
+        <iframe
+          src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          title="Document Preview"
+        />
       );
     }
 
-    // 🖼️ Images
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
+    if (['png', 'jpg', 'jpeg'].includes(lowerExt)) {
       return (
-        <div style={{ position: 'relative', textAlign: 'center' }}>
-          <img
-            src={url}
-            alt="Preview"
-            style={{
-              ...previewStyle,
-              objectFit: 'contain',
-            }}
-          />
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#777', marginTop: '10px' }}>
-            🔒 Image protected from right-click.
-          </p>
-        </div>
+        <img
+          src={url}
+          alt="Preview"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            objectFit: 'contain',
+            display: 'block',
+            margin: '0 auto',
+            zIndex: 2,
+          }}
+        />
       );
     }
 
-    // 🎬 Video
-    if (['mp4', 'mov', 'avi', 'mkv'].includes(lowerExt)) {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <video controls style={previewStyle}>
-            <source src={url} type={`video/${lowerExt}`} />
-            Your browser does not support video playback.
-          </video>
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#777', marginTop: '10px' }}>
-            🎥 Protected video preview.
-          </p>
-        </div>
-      );
-    }
-
-    // 🎵 Audio
-    if (['mp3', 'wav', 'ogg'].includes(lowerExt)) {
-      return (
-        <div style={{ textAlign: 'center' }}>
-          <audio controls style={{ width: '100%', marginTop: '10px' }}>
-            <source src={url} type={`audio/${lowerExt}`} />
-            Your browser does not support audio playback.
-          </audio>
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', color: '#777', marginTop: '10px' }}>
-            🎧 Protected audio playback.
-          </p>
-        </div>
-      );
-    }
-
-    // 📜 Text files
-    if (['txt', 'csv', 'json', 'log'].includes(lowerExt)) {
+    if (lowerExt === 'txt') {
       return (
         <iframe
           src={url}
-          style={{ ...previewStyle, height: '500px' }}
+          style={{ width: '100%', height: '500px', zIndex: 2 }}
           title="Text Preview"
         />
       );
     }
 
-    // ❗Unsupported file types
-    return (
-      <div style={{ textAlign: 'center', color: '#888', padding: '2rem' }}>
-        ⚠️ Preview not available for this file type.
-      </div>
-    );
+    if (['mp4', 'mpeg'].includes(lowerExt)) {
+      return (
+        <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
+          <source src={url} type={`video/${lowerExt}`} />
+        </video>
+      );
+    }
+
+    if (['mp3', 'wav'].includes(lowerExt)) {
+      return (
+        <audio controls style={{ width: '100%', zIndex: 2 }}>
+          <source src={url} type={`audio/${lowerExt}`} />
+        </audio>
+      );
+    }
+
+    return <p>⚠️ Preview not available for this file type.</p>;
   };
 
   return (
@@ -172,6 +128,7 @@ const PreviewPage = () => {
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
         <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
+            {/* ✅ Fixed logo path */}
             <img
               src="/logo.png"
               alt="Logo"
@@ -185,6 +142,7 @@ const PreviewPage = () => {
             </div>
           </span>
 
+          {/* Welcome to Vooli - Tablet and above only */}
           <h1
             style={{
               margin: 0,
@@ -303,6 +261,7 @@ const PreviewPage = () => {
         </span>
       </footer>
 
+      {/* Responsive styles */}
       <style>
         {`
           @media (min-width: 768px) {
