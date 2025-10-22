@@ -67,72 +67,7 @@ app.use('/api/file', previewRoute); // For preview, view, password check
 app.use('/api/admin', adminRoute);  // ✅ Admin login route
 
 // ✅ Serve uploaded files publicly
-// ✅ Serve files with support for audio/video streaming and CORS
-app.get('/files/:filename', (req, res) => {
-  const filePath = path.join(__dirname, 'uploads', req.params.filename);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send('File not found');
-  }
-
-  const stat = fs.statSync(filePath);
-  const fileSize = stat.size;
-  const range = req.headers.range;
-
-  // Set general CORS + playback headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-
-  // If browser requests a specific range (streaming)
-  if (range) {
-    const parts = range.replace(/bytes=/, "").split("-");
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-    const chunkSize = end - start + 1;
-    const file = fs.createReadStream(filePath, { start, end });
-
-    const ext = path.extname(filePath).toLowerCase();
-    const mimeMap = {
-      '.mp3': 'audio/mpeg',
-      '.mp4': 'video/mp4',
-      '.wav': 'audio/wav',
-      '.pdf': 'application/pdf',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg'
-    };
-    const contentType = mimeMap[ext] || 'application/octet-stream';
-
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunkSize,
-      'Content-Type': contentType,
-    });
-
-    file.pipe(res);
-  } else {
-    // Fallback if no range header
-    const ext = path.extname(filePath).toLowerCase();
-    const mimeMap = {
-      '.mp3': 'audio/mpeg',
-      '.mp4': 'video/mp4',
-      '.wav': 'audio/wav',
-      '.pdf': 'application/pdf',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg'
-    };
-    const contentType = mimeMap[ext] || 'application/octet-stream';
-
-    res.writeHead(200, {
-      'Content-Length': fileSize,
-      'Content-Type': contentType,
-    });
-    fs.createReadStream(filePath).pipe(res);
-  }
-});
-
+app.use('/files', express.static('uploads'));
 
 // 🕒 Auto-delete expired files every hour
 setInterval(async () => {
