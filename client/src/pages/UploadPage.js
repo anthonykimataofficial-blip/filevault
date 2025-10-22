@@ -141,7 +141,7 @@ function UploadPage() {
   <ul style={{ listStyleType: 'none', paddingLeft: '0', marginBottom: '0' }}>
     <li>📁 Upload documents, images, audio, or video</li>
     <li>🔑 Set a password to protect your file</li>
-    <li>📬 Click <strong>Upload</strong> and copy your private link</li>
+    <li>📬 Click <strong>Upload</strong> copy your private link and send to intended receiver </li>
     
   </ul>
 </div>
