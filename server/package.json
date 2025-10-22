@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.8.0",
     "content-disposition": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
