@@ -29,8 +29,9 @@ app.use(cors({
   credentials: true
 }));
 
-
-app.use(express.json());
+// ✅ Increase JSON and upload payload limits
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 // 🩵 Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
@@ -47,6 +48,9 @@ mongoose.connect(process.env.MONGODB_URI)
 // 🔍 Optional: log all incoming requests for debugging
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.originalUrl}`);
+  // ⏱️ Prevent uploads from timing out on large files
+  req.setTimeout(10 * 60 * 1000); // 10 minutes
+  res.setTimeout(10 * 60 * 1000);
   next();
 });
 
@@ -83,7 +87,6 @@ setInterval(async () => {
     console.error('❌ Error during cleanup:', err.message);
   }
 }, 60 * 60 * 1000); // runs every hour
-
 
 // ✅ Start server
 const PORT = process.env.PORT || 5000;
