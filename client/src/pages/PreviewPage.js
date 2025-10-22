@@ -241,7 +241,7 @@ const PreviewPage = () => {
             color: '#888',
           }}
         >
-          ⏳ Uploaded files will be auto-deleted after 7 days.
+          ⏳ Uploaded files will be auto-deleted after 24 hours.
         </p>
       </div>
 

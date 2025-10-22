@@ -122,8 +122,32 @@ function UploadPage() {
         <div className="container py-5" style={{ maxWidth: '600px' }}>
           <h2 className="text-center mb-4 text-white">📤 Secure File Uploader</h2>
 
+          {/* 💬 Playful translucent instruction box */}
+<div
+  className="mb-4 p-3 rounded"
+  style={{
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(8px)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    color: '#f8f9fa',
+    fontSize: '0.95rem',
+    lineHeight: '1.6',
+  }}
+>
+  <h5 className="text-center mb-3">💡 How It Works</h5>
+  <ul style={{ marginBottom: 0 }}>
+    <li>📁 Upload <strong>documents, images, audio</strong> or <strong>video</strong> files.</li>
+    <li>🔒 Set a <strong>password</strong> to keep your file safe.</li>
+    <li>🚀 Click <strong>Upload</strong> and share the magic link.</li>
+    <li>🕐 Files auto-delete after <strong>24 hours</strong> (free plan).</li>
+  </ul>
+</div>
+
+
           {!uploadResult ? (
             <form onSubmit={handleUpload} className="border p-4 rounded shadow-sm bg-light">
+
+              
               {/* Drag and Drop Zone */}
               <div
                 className={`mb-3 p-4 text-center border rounded ${dragActive ? 'bg-warning bg-opacity-25' : 'bg-light'}`}
