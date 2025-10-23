@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const File = require('../models/File');
+const axios = require('axios');
 
 // Route: POST /api/download/:fileId
 router.post('/:fileId', async (req, res) => {
@@ -31,19 +32,35 @@ router.post('/:fileId', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect password' });
     }
 
-    // 📥 Increment actual downloads count
+    // 📥 Increment downloads count
     file.downloads = (file.downloads || 0) + 1;
     await file.save();
 
-    // 📁 Send the file
-    const filePath = path.resolve(file.filePath);
-    res.set({
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
-    });
-    res.download(filePath);
-    
+    // ✅ Handle Cloudinary or Local File
+    if (file.filePath.startsWith('http')) {
+      // 🌩️ Cloudinary file — stream to user
+      const response = await axios({
+        url: file.filePath,
+        method: 'GET',
+        responseType: 'stream'
+      });
+
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${encodeURIComponent(file.originalName)}"`
+      );
+      response.data.pipe(res);
+    } else {
+      // 🗂️ Local file fallback
+      const filePath = path.resolve(file.filePath);
+      res.set({
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
+      });
+      res.download(filePath);
+    }
+
   } catch (err) {
-    console.error('Download error:', err);
+    console.error('❌ Download error:', err.message);
     res.status(500).json({ error: 'Server error during download' });
   }
 });
