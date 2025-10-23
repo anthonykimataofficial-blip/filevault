@@ -58,21 +58,26 @@ const PreviewPage = () => {
   const { originalName, ext, url, views, downloads } = fileData;
   const lowerExt = ext.toLowerCase();
 
+  // ✅ Cloudinary-aware preview logic
   const renderPreview = () => {
+    const fileURL = url.startsWith('http')
+      ? url // Cloudinary file
+      : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
+
     if (['pdf', 'docx', 'pptx'].includes(lowerExt)) {
       return (
         <iframe
-          src={`https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`}
+          src={`https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`}
           style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
           title="Document Preview"
         />
       );
     }
 
-    if (['png', 'jpg', 'jpeg'].includes(lowerExt)) {
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
       return (
         <img
-          src={url}
+          src={fileURL}
           alt="Preview"
           style={{
             maxWidth: '100%',
@@ -89,25 +94,25 @@ const PreviewPage = () => {
     if (lowerExt === 'txt') {
       return (
         <iframe
-          src={url}
+          src={fileURL}
           style={{ width: '100%', height: '500px', zIndex: 2 }}
           title="Text Preview"
         />
       );
     }
 
-    if (['mp4', 'mpeg'].includes(lowerExt)) {
+    if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
-          <source src={url} type={`video/${lowerExt}`} />
+          <source src={fileURL} type={`video/${lowerExt}`} />
         </video>
       );
     }
 
-    if (['mp3', 'wav'].includes(lowerExt)) {
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
-          <source src={url} type={`audio/${lowerExt}`} />
+          <source src={fileURL} type={`audio/${lowerExt}`} />
         </audio>
       );
     }
@@ -142,7 +147,6 @@ const PreviewPage = () => {
             </div>
           </span>
 
-          {/* Welcome to Vooli - Tablet and above only */}
           <h1
             style={{
               margin: 0,
@@ -261,7 +265,6 @@ const PreviewPage = () => {
         </span>
       </footer>
 
-      {/* Responsive styles */}
       <style>
         {`
           @media (min-width: 768px) {
