@@ -42,44 +42,35 @@ router.post('/', upload.single('file'), async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // ⏳ Set expiration time to 24 hours
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // ✅ Upload to Cloudinary
     const cloudResult = await cloudinary.uploader.upload(req.file.path, {
-      resource_type: 'auto', // handles pdf, mp3, mp4, etc.
+      resource_type: 'auto',
       folder: 'filevault_uploads',
-      public_id: path.parse(req.file.originalname).name, // Keep original name
-      use_filename: true,
-      unique_filename: false,
-      overwrite: true
     });
 
-    // ✅ Delete temp file from local after upload
+    // ✅ Delete temp file from local
     fs.unlinkSync(req.file.path);
 
-    // ✅ Ensure URL ends with proper file extension
-    let finalUrl = cloudResult.secure_url;
-    const ext = path.extname(req.file.originalname);
-    if (ext && !finalUrl.endsWith(ext)) {
-      finalUrl += ext;
-    }
+    // ✅ Force include file extension in Cloudinary URL
+    const fileUrl = cloudResult.secure_url.includes(path.extname(req.file.originalname))
+      ? cloudResult.secure_url
+      : `${cloudResult.secure_url}${path.extname(req.file.originalname)}`;
 
-    // ✅ Save file metadata to MongoDB
+    // ✅ Save to MongoDB
     const file = new File({
       originalName: req.file.originalname,
       storedName: cloudResult.public_id,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
-      filePath: finalUrl, // Cloudinary URL (fixed)
+      filePath: fileUrl, // ← now always ends with .png/.pdf/etc.
       password: hashedPassword,
       expiresAt,
     });
 
     await file.save();
 
-    // ✅ Return response
     res.json({
       message: 'File uploaded successfully ✅',
       fileId: file._id,
@@ -88,11 +79,9 @@ router.post('/', upload.single('file'), async (req, res) => {
     });
   } catch (err) {
     console.error('❌ Upload error:', err);
-
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(413).json({ error: 'File too large. Max 100MB allowed.' });
     }
-
     res.status(500).json({ error: 'Server error while uploading' });
   }
 });
