@@ -63,22 +63,35 @@ const PreviewPage = () => {
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
   // ✅ Cloudinary-aware preview logic with fallback for Google Docs Viewer
-   const renderPreview = () => {
+     const renderPreview = () => {
     const fileURL = url.startsWith('http')
       ? url
       : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-    // 🧠 If Cloudinary file, skip Google Docs Viewer (they block Cloudinary)
     const isCloudinary = fileURL.includes('cloudinary.com');
+    const cleanURL = fileURL.split('?')[0]; // remove any query params
 
     if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(lowerExt)) {
+      // ✅ Use native browser PDF renderer for Cloudinary or direct files
+      if (isCloudinary || lowerExt === 'pdf') {
+        return (
+          <iframe
+            src={cleanURL}
+            style={{
+              width: '100%',
+              height: '80vh',
+              border: 'none',
+              zIndex: 2,
+            }}
+            title="Document Preview"
+          />
+        );
+      }
+
+      // ✅ Otherwise fallback to Google Docs Viewer
       return (
         <iframe
-          src={
-            isCloudinary
-              ? fileURL // Directly embed Cloudinary file
-              : `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`
-          }
+          src={`https://docs.google.com/gview?url=${encodeURIComponent(cleanURL)}&embedded=true`}
           style={{
             width: '100%',
             height: '80vh',
@@ -93,7 +106,7 @@ const PreviewPage = () => {
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
       return (
         <img
-          src={fileURL}
+          src={cleanURL}
           alt="Preview"
           style={{
             maxWidth: '100%',
@@ -110,7 +123,7 @@ const PreviewPage = () => {
     if (lowerExt === 'txt') {
       return (
         <iframe
-          src={fileURL}
+          src={cleanURL}
           style={{ width: '100%', height: '500px', zIndex: 2 }}
           title="Text Preview"
         />
@@ -120,7 +133,7 @@ const PreviewPage = () => {
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
-          <source src={fileURL} type={`video/${lowerExt}`} />
+          <source src={cleanURL} type={`video/${lowerExt}`} />
         </video>
       );
     }
@@ -128,13 +141,14 @@ const PreviewPage = () => {
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
-          <source src={fileURL} type={`audio/${lowerExt}`} />
+          <source src={cleanURL} type={`audio/${lowerExt}`} />
         </audio>
       );
     }
 
     return <p>⚠️ Preview not available for this file type.</p>;
   };
+
 
 
   return (
