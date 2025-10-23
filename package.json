@@ -1,0 +1,27 @@
+{
+  "name": "filevault",
+  "version": "1.0.0",
+  "description": "Secure file sharing app using Express, MongoDB, and Cloudinary",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.8.0",
+    "content-disposition": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "mime-types": "^3.0.1",
+    "mongoose": "^8.17.0",
+    "multer": "^2.0.1",
+    "node-cron": "^4.2.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
