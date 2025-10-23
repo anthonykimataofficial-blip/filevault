@@ -62,13 +62,26 @@ const PreviewPage = () => {
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
-  // ✅ Cloudinary-aware preview logic
+  // ✅ Cloudinary-aware preview logic with fallback for Google Docs Viewer
   const renderPreview = () => {
     const fileURL = url.startsWith('http')
       ? url // Cloudinary file
       : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-    if (['pdf', 'docx', 'pptx'].includes(lowerExt)) {
+    // 📄 Documents (handle both Cloudinary + Google Docs Viewer fallback)
+    if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(lowerExt)) {
+      if (fileURL.includes('cloudinary')) {
+        // Cloudinary fallback (Google Docs often blocks it)
+        return (
+          <iframe
+            src={fileURL}
+            style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+            title="Document Preview"
+          />
+        );
+      }
+
+      // Normal Google Docs Viewer
       return (
         <iframe
           src={`https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`}
