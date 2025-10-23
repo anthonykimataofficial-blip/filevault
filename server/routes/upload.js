@@ -50,10 +50,21 @@ router.post('/', upload.single('file'), async (req, res) => {
     const cloudResult = await cloudinary.uploader.upload(req.file.path, {
       resource_type: 'auto', // handles pdf, mp3, mp4, etc.
       folder: 'filevault_uploads',
+      public_id: path.parse(req.file.originalname).name, // Keep original name
+      use_filename: true,
+      unique_filename: false,
+      overwrite: true
     });
 
     // ✅ Delete temp file from local after upload
     fs.unlinkSync(req.file.path);
+
+    // ✅ Ensure URL ends with proper file extension
+    let finalUrl = cloudResult.secure_url;
+    const ext = path.extname(req.file.originalname);
+    if (ext && !finalUrl.endsWith(ext)) {
+      finalUrl += ext;
+    }
 
     // ✅ Save file metadata to MongoDB
     const file = new File({
@@ -61,7 +72,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       storedName: cloudResult.public_id,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
-      filePath: cloudResult.secure_url, // Cloudinary URL
+      filePath: finalUrl, // Cloudinary URL (fixed)
       password: hashedPassword,
       expiresAt,
     });
