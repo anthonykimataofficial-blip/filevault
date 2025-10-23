@@ -63,29 +63,28 @@ const PreviewPage = () => {
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
   // ✅ Cloudinary-aware preview logic with fallback for Google Docs Viewer
-  const renderPreview = () => {
+   const renderPreview = () => {
     const fileURL = url.startsWith('http')
-      ? url // Cloudinary file
+      ? url
       : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-    // 📄 Documents (handle both Cloudinary + Google Docs Viewer fallback)
-    if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(lowerExt)) {
-      if (fileURL.includes('cloudinary')) {
-        // Cloudinary fallback (Google Docs often blocks it)
-        return (
-          <iframe
-            src={fileURL}
-            style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-            title="Document Preview"
-          />
-        );
-      }
+    // 🧠 If Cloudinary file, skip Google Docs Viewer (they block Cloudinary)
+    const isCloudinary = fileURL.includes('cloudinary.com');
 
-      // Normal Google Docs Viewer
+    if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(lowerExt)) {
       return (
         <iframe
-          src={`https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          src={
+            isCloudinary
+              ? fileURL // Directly embed Cloudinary file
+              : `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`
+          }
+          style={{
+            width: '100%',
+            height: '80vh',
+            border: 'none',
+            zIndex: 2,
+          }}
           title="Document Preview"
         />
       );
@@ -136,6 +135,7 @@ const PreviewPage = () => {
 
     return <p>⚠️ Preview not available for this file type.</p>;
   };
+
 
   return (
     <div
