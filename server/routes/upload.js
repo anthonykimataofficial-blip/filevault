@@ -17,7 +17,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Multer temp storage (in memory)
+// ✅ Multer temp storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
@@ -26,10 +26,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// ✅ Increase file size limit to 100MB
 const upload = multer({
   storage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 });
 
 // ✅ Upload route
@@ -42,29 +41,36 @@ router.post('/', upload.single('file'), async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // ✅ Upload to Cloudinary
-    const cloudResult = await cloudinary.uploader.upload(req.file.path, {
-      resource_type: 'auto',
-      folder: 'filevault_uploads',
-    });
+    console.log('📤 Uploading file to Cloudinary:', req.file.originalname);
 
-    // ✅ Delete temp file from local
+    // ✅ Try Cloudinary upload
+    let cloudResult;
+    try {
+      cloudResult = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: 'auto',
+        folder: 'filevault_uploads',
+      });
+      console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
+    } catch (cloudErr) {
+      console.error('❌ Cloudinary upload failed:', cloudErr);
+    }
+
+    // ✅ Delete local temp file
     fs.unlinkSync(req.file.path);
 
-    // ✅ Force include file extension in Cloudinary URL
-    const fileUrl = cloudResult.secure_url.includes(path.extname(req.file.originalname))
+    // ✅ Use Cloudinary URL if available
+    const finalUrl = cloudResult?.secure_url
       ? cloudResult.secure_url
-      : `${cloudResult.secure_url}${path.extname(req.file.originalname)}`;
+      : `${process.env.BACKEND_URL || 'https://filevault-backend-a7w4.onrender.com'}/files/${req.file.filename}`;
 
-    // ✅ Save to MongoDB
     const file = new File({
       originalName: req.file.originalname,
-      storedName: cloudResult.public_id,
+      storedName: cloudResult?.public_id || req.file.filename,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
-      filePath: fileUrl, // ← now always ends with .png/.pdf/etc.
+      filePath: finalUrl,
       password: hashedPassword,
       expiresAt,
     });
@@ -72,16 +78,15 @@ router.post('/', upload.single('file'), async (req, res) => {
     await file.save();
 
     res.json({
-      message: 'File uploaded successfully ✅',
+      message: cloudResult?.secure_url
+        ? '✅ Uploaded to Cloudinary successfully'
+        : '⚠️ Uploaded locally (Cloudinary failed)',
       fileId: file._id,
       previewLink: `${FRONTEND_URL}/preview/${file._id}`,
-      downloadLink: `${FRONTEND_URL}/download/${file._id}`
+      downloadLink: `${FRONTEND_URL}/download/${file._id}`,
     });
   } catch (err) {
-    console.error('❌ Upload error:', err);
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(413).json({ error: 'File too large. Max 100MB allowed.' });
-    }
+    console.error('❌ Upload route error:', err);
     res.status(500).json({ error: 'Server error while uploading' });
   }
 });
