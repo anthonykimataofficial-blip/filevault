@@ -48,7 +48,6 @@ mongoose.connect(process.env.MONGODB_URI)
 // 🔍 Optional: log all incoming requests for debugging
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.originalUrl}`);
-  // ⏱️ Prevent uploads from timing out on large files
   req.setTimeout(10 * 60 * 1000); // 10 minutes
   res.setTimeout(10 * 60 * 1000);
   next();
@@ -63,11 +62,16 @@ const adminRoute = require('./routes/admin'); // ✅ Admin route added
 // ✅ Mount routes
 app.use('/api/upload', uploadRoute);
 app.use('/api/download', downloadRoute);
-app.use('/api/file', previewRoute); // For preview, view, password check
-app.use('/api/admin', adminRoute);  // ✅ Admin login route
+app.use('/api/file', previewRoute);
+app.use('/api/admin', adminRoute);
 
 // ✅ Serve uploaded files publicly
 app.use('/files', express.static('uploads'));
+
+// ✅ Render health check route (MUST HAVE)
+app.get('/', (req, res) => {
+  res.send('✅ FileVault backend is running successfully on Render!');
+});
 
 // 🕒 Auto-delete expired files every hour
 setInterval(async () => {
@@ -76,8 +80,8 @@ setInterval(async () => {
     const expiredFiles = await File.find({ expiresAt: { $lte: now } });
     for (const file of expiredFiles) {
       try {
-        fs.unlinkSync(file.filePath); // remove from disk
-        await file.deleteOne();       // remove from MongoDB
+        fs.unlinkSync(file.filePath);
+        await file.deleteOne();
         console.log(`🗑️ Deleted expired file: ${file.originalName}`);
       } catch (err) {
         console.error(`❌ Error deleting file ${file._id}:`, err.message);
@@ -88,6 +92,6 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000); // runs every hour
 
-// ✅ Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ✅ Start server (Render requires 0.0.0.0 binding)
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
