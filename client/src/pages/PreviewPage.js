@@ -56,7 +56,11 @@ const PreviewPage = () => {
   if (!fileData) return <h2 style={{ textAlign: 'center' }}>Loading...</h2>;
 
   const { originalName, ext, url, views, downloads } = fileData;
-  const lowerExt = ext.toLowerCase();
+
+  // 🧠 Robust extension handling (handles uppercase + URL fallback)
+  const lowerExt = ext
+    ? ext.split('.').pop().trim().toLowerCase()
+    : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
   // ✅ Cloudinary-aware preview logic
   const renderPreview = () => {
