@@ -46,16 +46,20 @@ router.post('/', upload.single('file'), async (req, res) => {
     console.log('📤 Uploading file to Cloudinary:', req.file.originalname);
 
     // ✅ Try Cloudinary upload
-    let cloudResult;
-    try {
-      cloudResult = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: 'auto',
-        folder: 'filevault_uploads',
-      });
-      console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
-    } catch (cloudErr) {
-      console.error('❌ Cloudinary upload failed:', cloudErr);
-    }
+   let cloudResult;
+try {
+  cloudResult = await cloudinary.uploader.upload(req.file.path, {
+    resource_type: 'auto',
+    folder: 'filevault_uploads',
+  });
+  console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
+
+  // 🧩 Added: Log full Cloudinary response for debugging
+  console.log('📦 Full Cloudinary response:', cloudResult);
+} catch (cloudErr) {
+  console.error('❌ Cloudinary upload failed:', cloudErr);
+}
+
 
     // ✅ Delete local temp file
     fs.unlinkSync(req.file.path);
