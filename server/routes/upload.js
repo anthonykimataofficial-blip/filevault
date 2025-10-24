@@ -60,17 +60,15 @@ router.post('/', upload.single('file'), async (req, res) => {
     // ✅ Delete local temp file
     fs.unlinkSync(req.file.path);
 
-    // ✅ Use Cloudinary URL if available
-    const finalUrl = cloudResult?.secure_url
-      ? cloudResult.secure_url
-      : `${process.env.BACKEND_URL || 'https://filevault-backend-a7w4.onrender.com'}/files/${req.file.filename}`;
+    // ✅ Always use Cloudinary URL when available
+    const finalUrl = cloudResult?.secure_url || null;
 
     const file = new File({
       originalName: req.file.originalname,
       storedName: cloudResult?.public_id || req.file.filename,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
-      filePath: finalUrl,
+      filePath: finalUrl, // ✅ Save Cloudinary URL directly
       password: hashedPassword,
       expiresAt,
     });
@@ -80,7 +78,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     res.json({
       message: cloudResult?.secure_url
         ? '✅ Uploaded to Cloudinary successfully'
-        : '⚠️ Uploaded locally (Cloudinary failed)',
+        : '⚠️ Cloudinary upload failed; no valid URL saved.',
       fileId: file._id,
       previewLink: `${FRONTEND_URL}/preview/${file._id}`,
       downloadLink: `${FRONTEND_URL}/download/${file._id}`,
