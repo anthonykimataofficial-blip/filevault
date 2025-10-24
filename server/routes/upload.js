@@ -21,7 +21,7 @@ cloudinary.config({
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(file.originalname)}`;
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
     cb(null, uniqueName);
   }
 });
@@ -43,23 +43,19 @@ router.post('/', upload.single('file'), async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    console.log('📤 Uploading file to Cloudinary:', req.file.originalname);
+    console.log(`📤 Uploading "${req.file.originalname}" (${req.file.mimetype}, ${req.file.size} bytes)`);
 
     // ✅ Try Cloudinary upload
-   let cloudResult;
-try {
-  cloudResult = await cloudinary.uploader.upload(req.file.path, {
-    resource_type: 'auto',
-    folder: 'filevault_uploads',
-  });
-  console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
-
-  // 🧩 Added: Log full Cloudinary response for debugging
-  console.log('📦 Full Cloudinary response:', cloudResult);
-} catch (cloudErr) {
-  console.error('❌ Cloudinary upload failed:', cloudErr);
-}
-
+    let cloudResult;
+    try {
+      cloudResult = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: 'auto',
+        folder: 'filevault_uploads',
+      });
+      console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
+    } catch (cloudErr) {
+      console.error('❌ Cloudinary upload failed:', cloudErr.message);
+    }
 
     // ✅ Delete local temp file
     fs.unlinkSync(req.file.path);
@@ -90,7 +86,7 @@ try {
       downloadLink: `${FRONTEND_URL}/download/${file._id}`,
     });
   } catch (err) {
-    console.error('❌ Upload route error:', err);
+    console.error('❌ Upload route error:', err.message);
     res.status(500).json({ error: 'Server error while uploading' });
   }
 });
@@ -108,6 +104,5 @@ router.get('/check-cloudinary', async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;
