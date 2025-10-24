@@ -91,4 +91,19 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
+// 🔍 TEMP route to check Cloudinary connection
+router.get('/check-cloudinary', async (req, res) => {
+  try {
+    const result = await cloudinary.api.ping();
+    res.json({ success: true, message: '✅ Cloudinary connected', result });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: '❌ Cloudinary connection failed',
+      error: err.message,
+    });
+  }
+});
+
+
 module.exports = router;
