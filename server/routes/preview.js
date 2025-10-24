@@ -17,8 +17,10 @@ router.get('/:id', async (req, res) => {
       return res.status(410).json({ error: 'Link has expired' });
     }
 
-    // ✅ Use full backend URL for file access
-    const fileUrl = `${BACKEND_URL}/files/${encodeURIComponent(file.storedName)}`;
+    // ✅ Use Cloudinary URL if available, fallback to backend path
+    const fileUrl = file.filePath && file.filePath.startsWith('http')
+      ? file.filePath
+      : `${BACKEND_URL}/files/${encodeURIComponent(file.storedName)}`;
 
     // ✅ Respond with full metadata
     res.json({
@@ -27,7 +29,7 @@ router.get('/:id', async (req, res) => {
       fileSize: file.fileSize,
       createdAt: file.createdAt,
       expiresAt: file.expiresAt,
-      ext: path.extname(file.storedName).slice(1), // removes dot
+      ext: path.extname(file.originalName || '').slice(1), // removes dot safely
       url: fileUrl,
       views: file.views || 0,
       downloads: file.downloads || 0,
