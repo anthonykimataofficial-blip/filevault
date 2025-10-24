@@ -1,66 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const path = require('path');
 const File = require('../models/File');
+const bcrypt = require('bcryptjs');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
-// Route: POST /api/download/:fileId
-router.post('/:fileId', async (req, res) => {
-  const { fileId } = req.params;
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ error: 'Password is required' });
-  }
-
+// ✅ Handle file download
+router.post('/:id', async (req, res) => {
   try {
-    const file = await File.findById(fileId);
+    const { password } = req.body;
+    const file = await File.findById(req.params.id);
 
-    if (!file) {
-      return res.status(404).json({ error: 'File not found' });
-    }
+    if (!file) return res.status(404).json({ error: 'File not found or expired' });
 
-    // ⏰ Check if expired
-    if (file.expiresAt && new Date() > file.expiresAt) {
-      return res.status(410).json({ error: 'This link has expired.' });
-    }
-
-    // 🔐 Verify password
     const isMatch = await bcrypt.compare(password, file.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Incorrect password' });
-    }
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password' });
 
-    // 📥 Increment downloads count
-    file.downloads = (file.downloads || 0) + 1;
-    await file.save();
+    // ✅ Handle Cloudinary or local file
+    const fileUrl = file.filePath;
+    const isCloudinary = fileUrl.startsWith('http');
 
-    // ✅ Handle Cloudinary or Local File
-    if (file.filePath.startsWith('http')) {
-      // 🌩️ Cloudinary file — stream to user
+    // ⬇️ Cloudinary file — stream download from URL
+    if (isCloudinary) {
       const response = await axios({
-        url: file.filePath,
+        url: fileUrl,
         method: 'GET',
-        responseType: 'stream'
+        responseType: 'arraybuffer',
       });
 
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${encodeURIComponent(file.originalName)}"`
-      );
-      response.data.pipe(res);
-    } else {
-      // 🗂️ Local file fallback
-      const filePath = path.resolve(file.filePath);
-      res.set({
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(file.originalName)}"`,
-      });
-      res.download(filePath);
+      res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
+      res.setHeader('Content-Type', file.fileType);
+      res.send(Buffer.from(response.data, 'binary'));
+
+      // ✅ increment download count
+      await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
+      return;
     }
 
+    // ⬇️ Local file fallback (for older uploads)
+    const localPath = path.resolve(file.filePath);
+    if (!fs.existsSync(localPath)) {
+      return res.status(404).json({ error: 'Local file not found on server' });
+    }
+
+    res.download(localPath, file.originalName, async (err) => {
+      if (!err) {
+        await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
+      }
+    });
   } catch (err) {
-    console.error('❌ Download error:', err.message);
+    console.error('❌ Download error:', err);
     res.status(500).json({ error: 'Server error during download' });
   }
 });
