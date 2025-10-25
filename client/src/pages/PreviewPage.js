@@ -54,41 +54,59 @@ const PreviewPage = () => {
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-  // ✅ PDF fallback logic
   const renderPreview = () => {
-    if (['pdf'].includes(lowerExt)) {
-      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+    // 📄 PDF and DOC files always use Google Docs Viewer (safe + CORS-free)
+    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
+      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+      const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(fileURL)}&embedded=true`;
+      const viewerUrl = pdfError ? driveUrl : gviewUrl;
 
       return (
         <iframe
-          src={pdfError ? fallbackUrl : fileURL}
+          src={viewerUrl}
           onError={() => setPdfError(true)}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="PDF Preview"
+          style={{
+            width: '100%',
+            height: '80vh',
+            border: 'none',
+            zIndex: 2,
+            backgroundColor: '#fff',
+          }}
+          title="Document Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
       );
     }
 
-    if (['docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+    // 🖼️ Images
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
       return (
-        <iframe
-          src={gviewUrl}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="Document Preview"
+        <img
+          src={fileURL}
+          alt="Preview"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            display: 'block',
+            margin: '0 auto',
+            zIndex: 2,
+          }}
         />
       );
     }
 
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
-      return <img src={fileURL} alt="Preview" style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto', zIndex: 2 }} />;
-    }
-
+    // 📜 Text files
     if (lowerExt === 'txt') {
-      return <iframe src={fileURL} style={{ width: '100%', height: '500px', zIndex: 2 }} title="Text Preview" />;
+      return (
+        <iframe
+          src={fileURL}
+          style={{ width: '100%', height: '500px', zIndex: 2 }}
+          title="Text Preview"
+        />
+      );
     }
 
+    // 🎥 Video
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
@@ -97,6 +115,7 @@ const PreviewPage = () => {
       );
     }
 
+    // 🎧 Audio
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
