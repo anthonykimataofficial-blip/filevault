@@ -17,8 +17,8 @@ router.get('/:id', async (req, res) => {
       return res.status(410).json({ error: 'Link has expired' });
     }
 
-    // ✅ Use Cloudinary URL if available, fallback to backend path
-    const fileUrl = file.filePath && file.filePath.startsWith('http')
+    // ✅ Prefer Cloudinary URL if available
+    const fileUrl = file.filePath?.startsWith('http')
       ? file.filePath
       : `${BACKEND_URL}/files/${encodeURIComponent(file.storedName)}`;
 
@@ -29,12 +29,12 @@ router.get('/:id', async (req, res) => {
       fileSize: file.fileSize,
       createdAt: file.createdAt,
       expiresAt: file.expiresAt,
-      ext: path.extname(file.originalName || '').slice(1), // removes dot safely
+      ext: path.extname(file.originalName).slice(1), // ensures correct ext
       url: fileUrl,
       views: file.views || 0,
       downloads: file.downloads || 0,
       previewLink: `/preview/${file._id}`,
-      downloadLink: `/download/${file._id}`
+      downloadLink: `/download/${file._id}`,
     });
   } catch (err) {
     console.error('Error loading preview metadata:', err);
