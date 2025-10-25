@@ -55,16 +55,19 @@ const PreviewPage = () => {
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
   const renderPreview = () => {
-    // ✅ PDF & Word fallback viewer
+    // ✅ PDF & Word fallback viewer (now improved for Cloudinary)
     if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
-      const previewSrc = pdfError ? fallbackUrl : fallbackUrl; // always use fallback for CORS safety
+      const googleViewer = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+      const driveViewer = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(fileURL)}`;
+      const previewSrc = lowerExt === 'pdf'
+        ? (pdfError ? driveViewer : googleViewer)
+        : googleViewer;
 
       return (
         <iframe
           src={previewSrc}
           onError={() => setPdfError(true)}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2, background: '#f8f9fa' }}
           title="Document Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
