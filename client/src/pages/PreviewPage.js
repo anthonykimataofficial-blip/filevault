@@ -65,30 +65,35 @@ const PreviewPage = () => {
   const renderPreview = () => {
     // 📄 Google Docs Viewer for PDFs and Word docs
    // 📄 Handle PDF and Word docs differently
-if (['doc', 'docx', 'pptx'].includes(lowerExt)) {
-  // Use Google Docs Viewer for MS Office files
-  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+if (lowerExt === 'pdf') {
+  // Try direct PDF rendering first
+  const [pdfError, setPdfError] = React.useState(false);
+
+  const pdfUrl = fileURL;
+  const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+
   return (
-    <iframe
-      src={viewerUrl}
-      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-      title="Document Preview"
-      sandbox="allow-same-origin allow-scripts allow-popups"
-    />
+    <>
+      {!pdfError ? (
+        <iframe
+          src={pdfUrl}
+          onError={() => setPdfError(true)}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          title="PDF Preview"
+          sandbox="allow-same-origin allow-scripts allow-popups"
+        />
+      ) : (
+        <iframe
+          src={fallbackUrl}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          title="PDF Fallback Preview"
+          sandbox="allow-same-origin allow-scripts allow-popups"
+        />
+      )}
+    </>
   );
 }
 
-if (lowerExt === 'pdf') {
-  // Direct embed for PDFs (faster + more reliable)
-  return (
-    <iframe
-      src={fileURL}
-      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-      title="PDF Preview"
-      sandbox="allow-same-origin allow-scripts allow-popups"
-    />
-  );
-}
 
 
     // 🖼️ Image preview
