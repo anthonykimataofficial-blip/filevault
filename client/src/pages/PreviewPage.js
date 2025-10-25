@@ -5,7 +5,7 @@ const PreviewPage = () => {
   const { fileId } = useParams();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState(null);
-  const [pdfError, setPdfError] = useState(false); // ✅ moved hook to top level
+  const [pdfError, setPdfError] = useState(false); // ✅ Hook is at the top level only
 
   useEffect(() => {
     const fetchFile = async () => {
@@ -19,7 +19,6 @@ const PreviewPage = () => {
         const data = await res.json();
 
         await fetch(`${API_BASE}/api/file/${fileId}/view`, { method: 'POST' });
-
         setFileData(data);
       } catch (err) {
         setError(err.message);
@@ -61,15 +60,16 @@ const PreviewPage = () => {
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
+  // ✅ Moved all logic outside hooks — clean functional preview renderer
   const renderPreview = () => {
-    // 📄 Handle PDF and Word docs differently
+    // 📄 PDF and DOC preview (with Google Docs fallback)
     if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const pdfUrl = fileURL;
       const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+      const previewSrc = pdfError ? fallbackUrl : fileURL;
 
       return (
         <iframe
-          src={pdfError ? fallbackUrl : pdfUrl}
+          src={previewSrc}
           onError={() => setPdfError(true)}
           style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
           title="Document Preview"
@@ -78,7 +78,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🖼️ Image preview
+    // 🖼️ Images
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
       return (
         <img
@@ -96,7 +96,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 📜 Text preview
+    // 📜 Text files
     if (lowerExt === 'txt') {
       return (
         <iframe
@@ -107,7 +107,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎥 Video preview
+    // 🎥 Video
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
@@ -116,7 +116,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎧 Audio preview
+    // 🎧 Audio
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
