@@ -45,7 +45,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     console.log(`📤 Uploading "${req.file.originalname}" (${req.file.mimetype}, ${req.file.size} bytes)`);
 
-    // ✅ Try Cloudinary upload
+    // ✅ Upload to Cloudinary
     let cloudResult;
     try {
       cloudResult = await cloudinary.uploader.upload(req.file.path, {
@@ -57,10 +57,8 @@ router.post('/', upload.single('file'), async (req, res) => {
       console.error('❌ Cloudinary upload failed:', cloudErr.message);
     }
 
-    // ✅ Delete local temp file
     fs.unlinkSync(req.file.path);
 
-    // ✅ If Cloudinary failed, fallback to local URL
     const finalUrl = cloudResult?.secure_url
       ? cloudResult.secure_url
       : `${process.env.BACKEND_URL || 'https://filevault-backend-a7w4.onrender.com'}/files/${req.file.filename}`;
@@ -91,7 +89,6 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
-// 🔍 TEMP route to check Cloudinary connection
 router.get('/check-cloudinary', async (req, res) => {
   try {
     const result = await cloudinary.api.ping();

@@ -5,15 +5,12 @@ const PreviewPage = () => {
   const { fileId } = useParams();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState(null);
-  const [pdfError, setPdfError] = useState(false); // ✅ Hook is at the top level only
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        const API_BASE =
-          process.env.REACT_APP_API_URL ||
-          "https://filevault-backend-a7w4.onrender.com";
-
+        const API_BASE = process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com";
         const res = await fetch(`${API_BASE}/api/file/${fileId}`);
         if (!res.ok) throw new Error('File not found or expired');
         const data = await res.json();
@@ -24,7 +21,6 @@ const PreviewPage = () => {
         setError(err.message);
       }
     };
-
     fetchFile();
   }, [fileId]);
 
@@ -35,7 +31,6 @@ const PreviewPage = () => {
         alert('🚫 Screenshots and printing are disabled on this page.');
       }
     };
-
     const handleContextMenu = (e) => e.preventDefault();
 
     window.addEventListener('keydown', handleKeyDown);
@@ -51,7 +46,6 @@ const PreviewPage = () => {
   if (!fileData) return <h2 style={{ textAlign: 'center' }}>Loading...</h2>;
 
   const { originalName, ext, url, views, downloads } = fileData;
-
   const lowerExt = ext
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
@@ -60,12 +54,11 @@ const PreviewPage = () => {
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-  // ✅ Moved all logic outside hooks — clean functional preview renderer
   const renderPreview = () => {
-    // 📄 PDF and DOC preview (with Google Docs fallback)
+    // ✅ PDF & Word fallback viewer
     if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
       const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
-      const previewSrc = pdfError ? fallbackUrl : fileURL;
+      const previewSrc = pdfError ? fallbackUrl : fallbackUrl; // always use fallback for CORS safety
 
       return (
         <iframe
@@ -78,36 +71,14 @@ const PreviewPage = () => {
       );
     }
 
-    // 🖼️ Images
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
-      return (
-        <img
-          src={fileURL}
-          alt="Preview"
-          style={{
-            maxWidth: '100%',
-            maxHeight: '70vh',
-            objectFit: 'contain',
-            display: 'block',
-            margin: '0 auto',
-            zIndex: 2,
-          }}
-        />
-      );
+      return <img src={fileURL} alt="Preview" style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto', zIndex: 2 }} />;
     }
 
-    // 📜 Text files
     if (lowerExt === 'txt') {
-      return (
-        <iframe
-          src={fileURL}
-          style={{ width: '100%', height: '500px', zIndex: 2 }}
-          title="Text Preview"
-        />
-      );
+      return <iframe src={fileURL} style={{ width: '100%', height: '500px', zIndex: 2 }} title="Text Preview" />;
     }
 
-    // 🎥 Video
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
@@ -116,7 +87,6 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎧 Audio
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
