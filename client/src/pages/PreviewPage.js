@@ -64,17 +64,32 @@ const PreviewPage = () => {
 
   const renderPreview = () => {
     // 📄 Google Docs Viewer for PDFs and Word docs
-    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
-      return (
-        <iframe
-          src={viewerUrl}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="Document Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
-        />
-      );
-    }
+   // 📄 Handle PDF and Word docs differently
+if (['doc', 'docx', 'pptx'].includes(lowerExt)) {
+  // Use Google Docs Viewer for MS Office files
+  const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+  return (
+    <iframe
+      src={viewerUrl}
+      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+      title="Document Preview"
+      sandbox="allow-same-origin allow-scripts allow-popups"
+    />
+  );
+}
+
+if (lowerExt === 'pdf') {
+  // Direct embed for PDFs (faster + more reliable)
+  return (
+    <iframe
+      src={fileURL}
+      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+      title="PDF Preview"
+      sandbox="allow-same-origin allow-scripts allow-popups"
+    />
+  );
+}
+
 
     // 🖼️ Image preview
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
