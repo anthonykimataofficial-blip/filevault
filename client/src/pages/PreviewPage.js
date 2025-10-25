@@ -5,6 +5,7 @@ const PreviewPage = () => {
   const { fileId } = useParams();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState(null);
+  const [pdfError, setPdfError] = useState(false); // ✅ moved hook to top level
 
   useEffect(() => {
     const fetchFile = async () => {
@@ -52,45 +53,30 @@ const PreviewPage = () => {
 
   const { originalName, ext, url, views, downloads } = fileData;
 
-  // 🧠 Handle missing or uppercase extensions
   const lowerExt = ext
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
-  // ✅ Use direct Cloudinary or backend URL
   const fileURL = url.startsWith('http')
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
   const renderPreview = () => {
-   
-  // 📄 Handle PDF and Word docs differently
-if (lowerExt === 'pdf') {
-  const pdfUrl = fileURL;
-  const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
+    // 📄 Handle PDF and Word docs differently
+    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
+      const pdfUrl = fileURL;
+      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
 
-  // Local flag to handle PDF load error
-  let pdfLoadFailed = false;
-
-  const handlePdfError = () => {
-    pdfLoadFailed = true;
-    document.getElementById('pdf-frame').src = fallbackUrl;
-  };
-
-  return (
-    <iframe
-      id="pdf-frame"
-      src={pdfUrl}
-      onError={handlePdfError}
-      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-      title="PDF Preview"
-      sandbox="allow-same-origin allow-scripts allow-popups"
-    />
-  );
-}
-
-
-
+      return (
+        <iframe
+          src={pdfError ? fallbackUrl : pdfUrl}
+          onError={() => setPdfError(true)}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          title="Document Preview"
+          sandbox="allow-same-origin allow-scripts allow-popups"
+        />
+      );
+    }
 
     // 🖼️ Image preview
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
