@@ -54,34 +54,52 @@ const PreviewPage = () => {
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
+  // ✅ Updated renderPreview function
   const renderPreview = () => {
-    // ✅ PDF & Word fallback viewer (now improved for Cloudinary)
+    // 📄 Handle PDF & Word files with reliable fallback
     if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const googleViewer = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
-      const driveViewer = `https://drive.google.com/viewerng/viewer?embedded=true&url=${encodeURIComponent(fileURL)}`;
-      const previewSrc = lowerExt === 'pdf'
-        ? (pdfError ? driveViewer : googleViewer)
-        : googleViewer;
+      // 👉 Ensure Cloudinary files end with .pdf or .docx
+      const normalizedURL =
+        fileURL.includes('cloudinary.com') && !fileURL.match(/\.(pdf|docx|doc|pptx)$/)
+          ? `${fileURL}.${lowerExt}`
+          : fileURL;
+
+      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(normalizedURL)}&embedded=true`;
+      const previewSrc = fallbackUrl; // Always use fallback — it handles cross-origin better
 
       return (
         <iframe
           src={previewSrc}
-          onError={() => setPdfError(true)}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2, background: '#f8f9fa' }}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
           title="Document Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
       );
     }
 
+    // 🖼️ Images
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
-      return <img src={fileURL} alt="Preview" style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto', zIndex: 2 }} />;
+      return (
+        <img
+          src={fileURL}
+          alt="Preview"
+          style={{
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            display: 'block',
+            margin: '0 auto',
+            zIndex: 2,
+          }}
+        />
+      );
     }
 
+    // 📜 Text files
     if (lowerExt === 'txt') {
       return <iframe src={fileURL} style={{ width: '100%', height: '500px', zIndex: 2 }} title="Text Preview" />;
     }
 
+    // 🎥 Video
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
@@ -90,6 +108,7 @@ const PreviewPage = () => {
       );
     }
 
+    // 🎧 Audio
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
