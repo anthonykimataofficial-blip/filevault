@@ -64,35 +64,31 @@ const PreviewPage = () => {
 
   const renderPreview = () => {
    
-   // 📄 Handle PDF and Word docs differently
+  // 📄 Handle PDF and Word docs differently
 if (lowerExt === 'pdf') {
-  // Try direct PDF rendering first
-  const [pdfError, setPdfError] = React.useState(false);
-
   const pdfUrl = fileURL;
   const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
 
+  // Local flag to handle PDF load error
+  let pdfLoadFailed = false;
+
+  const handlePdfError = () => {
+    pdfLoadFailed = true;
+    document.getElementById('pdf-frame').src = fallbackUrl;
+  };
+
   return (
-    <>
-      {!pdfError ? (
-        <iframe
-          src={pdfUrl}
-          onError={() => setPdfError(true)}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="PDF Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
-        />
-      ) : (
-        <iframe
-          src={fallbackUrl}
-          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="PDF Fallback Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
-        />
-      )}
-    </>
+    <iframe
+      id="pdf-frame"
+      src={pdfUrl}
+      onError={handlePdfError}
+      style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+      title="PDF Preview"
+      sandbox="allow-same-origin allow-scripts allow-popups"
+    />
   );
 }
+
 
 
 
