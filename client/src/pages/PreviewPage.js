@@ -63,7 +63,7 @@ const PreviewPage = () => {
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
   const renderPreview = () => {
-    // 📄 Google Docs Viewer for PDFs and Word docs
+   
    // 📄 Handle PDF and Word docs differently
 if (lowerExt === 'pdf') {
   // Try direct PDF rendering first
