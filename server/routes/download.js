@@ -1,3 +1,4 @@
+// server/routes/download.js
 const express = require('express');
 const router = express.Router();
 const File = require('../models/File');
@@ -21,7 +22,10 @@ router.post('/:id', async (req, res) => {
     const fileUrl = file.filePath;
     const isCloudinary = fileUrl.startsWith('http');
 
-    // ⬇️ Cloudinary file — stream download from URL
+    // 🔐 Increment downloads
+    await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
+
+    // ⬇️ Cloudinary file — stream download
     if (isCloudinary) {
       const response = await axios({
         url: fileUrl,
@@ -29,13 +33,17 @@ router.post('/:id', async (req, res) => {
         responseType: 'arraybuffer',
       });
 
-      res.setHeader('Content-Disposition', `attachment; filename="${file.originalName}"`);
-      res.setHeader('Content-Type', file.fileType);
-      res.send(Buffer.from(response.data, 'binary'));
+      // ✅ Allow embedding in previews (important for PDFs)
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
 
-      // ✅ increment download count
-      await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
-      return;
+      // ✅ Set correct headers for download/preview
+      res.setHeader('Content-Disposition', `inline; filename="${file.originalName}"`);
+      res.setHeader('Content-Type', file.fileType);
+
+      return res.send(Buffer.from(response.data, 'binary'));
     }
 
     // ⬇️ Local file fallback (for older uploads)
@@ -44,10 +52,12 @@ router.post('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Local file not found on server' });
     }
 
-    res.download(localPath, file.originalName, async (err) => {
-      if (!err) {
-        await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
-      }
+    // ✅ Allow preview embedding for local PDFs as well
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    return res.download(localPath, file.originalName, async (err) => {
+      if (err) console.error('❌ Download error:', err.message);
     });
   } catch (err) {
     console.error('❌ Download error:', err);
