@@ -54,52 +54,41 @@ const PreviewPage = () => {
     ? url
     : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-  // ✅ Updated renderPreview function
+  // ✅ PDF fallback logic
   const renderPreview = () => {
-    // 📄 Handle PDF & Word files with reliable fallback
-    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      // 👉 Ensure Cloudinary files end with .pdf or .docx
-      const normalizedURL =
-        fileURL.includes('cloudinary.com') && !fileURL.match(/\.(pdf|docx|doc|pptx)$/)
-          ? `${fileURL}.${lowerExt}`
-          : fileURL;
-
-      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(normalizedURL)}&embedded=true`;
-      const previewSrc = fallbackUrl; // Always use fallback — it handles cross-origin better
+    if (['pdf'].includes(lowerExt)) {
+      const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
 
       return (
         <iframe
-          src={previewSrc}
+          src={pdfError ? fallbackUrl : fileURL}
+          onError={() => setPdfError(true)}
           style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
-          title="Document Preview"
+          title="PDF Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
       );
     }
 
-    // 🖼️ Images
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
+    if (['docx', 'doc', 'pptx'].includes(lowerExt)) {
+      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
       return (
-        <img
-          src={fileURL}
-          alt="Preview"
-          style={{
-            maxWidth: '100%',
-            maxHeight: '70vh',
-            display: 'block',
-            margin: '0 auto',
-            zIndex: 2,
-          }}
+        <iframe
+          src={gviewUrl}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
+          title="Document Preview"
         />
       );
     }
 
-    // 📜 Text files
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
+      return <img src={fileURL} alt="Preview" style={{ maxWidth: '100%', maxHeight: '70vh', display: 'block', margin: '0 auto', zIndex: 2 }} />;
+    }
+
     if (lowerExt === 'txt') {
       return <iframe src={fileURL} style={{ width: '100%', height: '500px', zIndex: 2 }} title="Text Preview" />;
     }
 
-    // 🎥 Video
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
@@ -108,7 +97,6 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎧 Audio
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
