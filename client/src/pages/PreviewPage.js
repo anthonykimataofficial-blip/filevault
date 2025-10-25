@@ -9,7 +9,6 @@ const PreviewPage = () => {
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        // ✅ Use live backend when deployed, localhost in dev
         const API_BASE =
           process.env.REACT_APP_API_URL ||
           "https://filevault-backend-a7w4.onrender.com";
@@ -18,9 +17,7 @@ const PreviewPage = () => {
         if (!res.ok) throw new Error('File not found or expired');
         const data = await res.json();
 
-        await fetch(`${API_BASE}/api/file/${fileId}/view`, {
-          method: 'POST',
-        });
+        await fetch(`${API_BASE}/api/file/${fileId}/view`, { method: 'POST' });
 
         setFileData(data);
       } catch (err) {
@@ -39,9 +36,7 @@ const PreviewPage = () => {
       }
     };
 
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-    };
+    const handleContextMenu = (e) => e.preventDefault();
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('contextmenu', handleContextMenu);
@@ -57,56 +52,35 @@ const PreviewPage = () => {
 
   const { originalName, ext, url, views, downloads } = fileData;
 
-  // 🧠 Robust extension handling (handles uppercase + URL fallback)
+  // 🧠 Handle missing or uppercase extensions
   const lowerExt = ext
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
-  // ✅ Cloudinary-aware preview logic with fallback for Google Docs Viewer
-     const renderPreview = () => {
-    const fileURL = url.startsWith('http')
-      ? url
-      : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
+  // ✅ Use direct Cloudinary or backend URL
+  const fileURL = url.startsWith('http')
+    ? url
+    : `${process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com"}/files/${url}`;
 
-    const isCloudinary = fileURL.includes('cloudinary.com');
-    const cleanURL = fileURL.split('?')[0]; // remove any query params
-
-    if (['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(lowerExt)) {
-      // ✅ Use native browser PDF renderer for Cloudinary or direct files
-      if (isCloudinary || lowerExt === 'pdf') {
-        return (
-          <iframe
-            src={cleanURL}
-            style={{
-              width: '100%',
-              height: '80vh',
-              border: 'none',
-              zIndex: 2,
-            }}
-            title="Document Preview"
-          />
-        );
-      }
-
-      // ✅ Otherwise fallback to Google Docs Viewer
+  const renderPreview = () => {
+    // 📄 Google Docs Viewer for PDFs and Word docs
+    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
+      const viewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileURL)}&embedded=true`;
       return (
         <iframe
-          src={`https://docs.google.com/gview?url=${encodeURIComponent(cleanURL)}&embedded=true`}
-          style={{
-            width: '100%',
-            height: '80vh',
-            border: 'none',
-            zIndex: 2,
-          }}
+          src={viewerUrl}
+          style={{ width: '100%', height: '80vh', border: 'none', zIndex: 2 }}
           title="Document Preview"
+          sandbox="allow-same-origin allow-scripts allow-popups"
         />
       );
     }
 
+    // 🖼️ Image preview
     if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
       return (
         <img
-          src={cleanURL}
+          src={fileURL}
           alt="Preview"
           style={{
             maxWidth: '100%',
@@ -120,36 +94,37 @@ const PreviewPage = () => {
       );
     }
 
+    // 📜 Text preview
     if (lowerExt === 'txt') {
       return (
         <iframe
-          src={cleanURL}
+          src={fileURL}
           style={{ width: '100%', height: '500px', zIndex: 2 }}
           title="Text Preview"
         />
       );
     }
 
+    // 🎥 Video preview
     if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
-          <source src={cleanURL} type={`video/${lowerExt}`} />
+          <source src={fileURL} type={`video/${lowerExt}`} />
         </video>
       );
     }
 
+    // 🎧 Audio preview
     if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
-          <source src={cleanURL} type={`audio/${lowerExt}`} />
+          <source src={fileURL} type={`audio/${lowerExt}`} />
         </audio>
       );
     }
 
     return <p>⚠️ Preview not available for this file type.</p>;
   };
-
-
 
   return (
     <div
@@ -164,20 +139,12 @@ const PreviewPage = () => {
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
         <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
-            {/* ✅ Fixed logo path */}
-            <img
-              src="/logo.png"
-              alt="Logo"
-              width="60"
-              height="60"
-              className="d-inline-block align-top me-2"
-            />
+            <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>vooli</div>
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
           </span>
-
           <h1
             style={{
               margin: 0,
@@ -195,10 +162,7 @@ const PreviewPage = () => {
           >
             Welcome to Vooli
           </h1>
-
-          <Link to="/" className="btn btn-primary">
-            Click here to upload files
-          </Link>
+          <Link to="/" className="btn btn-primary">Click here to upload files</Link>
         </div>
       </nav>
 
@@ -248,34 +212,16 @@ const PreviewPage = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link
-            to={`/download/${fileId}`}
-            className="btn btn-outline-primary"
-            style={{ padding: '8px 20px', fontWeight: '500' }}
-          >
+          <Link to={`/download/${fileId}`} className="btn btn-outline-primary" style={{ padding: '8px 20px', fontWeight: '500' }}>
             🔒 Enter password to download
           </Link>
         </div>
 
-        <div
-          style={{
-            marginTop: '1.5rem',
-            textAlign: 'center',
-            fontSize: '0.9rem',
-            color: '#555',
-          }}
-        >
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#555' }}>
           👁️ Views: {views} | 📥 Downloads: {downloads}
         </div>
 
-        <p
-          style={{
-            marginTop: '1rem',
-            textAlign: 'center',
-            fontSize: '0.85rem',
-            color: '#888',
-          }}
-        >
+        <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
           ⏳ Uploaded files will be auto-deleted after 24 hours.
         </p>
       </div>
@@ -296,15 +242,13 @@ const PreviewPage = () => {
         </span>
       </footer>
 
-      <style>
-        {`
-          @media (min-width: 768px) {
-            .welcome-heading {
-              display: block !important;
-            }
+      <style>{`
+        @media (min-width: 768px) {
+          .welcome-heading {
+            display: block !important;
           }
-        `}
-      </style>
+        }
+      `}</style>
     </div>
   );
 };
