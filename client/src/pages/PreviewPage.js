@@ -5,7 +5,6 @@ const PreviewPage = () => {
   const { fileId } = useParams();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState(null);
-  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     const fetchFile = async () => {
@@ -56,26 +55,22 @@ const PreviewPage = () => {
     : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
-    // ✅ PDF and DOC files with backend proxy for CORS-safe Google Docs access
+    // ✅ PDFs and Docs now use backend proxy (no Google Docs viewer)
     if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const proxiedUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
-      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(proxiedUrl)}&embedded=true`;
-      const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(proxiedUrl)}&embedded=true`;
-      const viewerUrl = pdfError ? driveUrl : gviewUrl;
+      const proxyUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
 
       return (
         <iframe
-          src={viewerUrl}
-          onError={() => setPdfError(true)}
+          src={proxyUrl}
           style={{
             width: '100%',
             height: '80vh',
             border: 'none',
-            zIndex: 2,
             backgroundColor: '#fff',
+            zIndex: 2,
           }}
           title="Document Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
+          sandbox="allow-same-origin allow-scripts"
         />
       );
     }
