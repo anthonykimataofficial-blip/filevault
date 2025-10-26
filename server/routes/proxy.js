@@ -1,23 +1,26 @@
+// server/routes/proxy.js
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-// ✅ This route proxies file URLs so Google Docs can access them safely
+// ✅ Simple proxy to stream Cloudinary or remote files
 router.get('/', async (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'Missing file URL' });
+  const fileUrl = req.query.url;
+  if (!fileUrl) return res.status(400).send('Missing file URL');
 
   try {
-    const response = await axios.get(url, {
+    const response = await axios({
+      url: fileUrl,
+      method: 'GET',
       responseType: 'arraybuffer',
     });
 
-    res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // ✅ Copy content type for correct rendering
+    res.setHeader('Content-Type', response.headers['content-type']);
     res.send(response.data);
   } catch (err) {
-    console.error('❌ Proxy fetch failed:', err.message);
-    res.status(500).json({ error: 'Failed to proxy file' });
+    console.error('❌ Proxy error:', err.message);
+    res.status(500).send('Error fetching file.');
   }
 });
 

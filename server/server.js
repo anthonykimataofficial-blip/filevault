@@ -58,12 +58,14 @@ const uploadRoute = require('./routes/upload');
 const downloadRoute = require('./routes/download');
 const previewRoute = require('./routes/preview');
 const adminRoute = require('./routes/admin'); // ✅ Admin route added
+const proxyRoute = require('./routes/proxy'); // ✅ New proxy route added
 
 // ✅ Mount routes
 app.use('/api/upload', uploadRoute);
 app.use('/api/download', downloadRoute);
 app.use('/api/file', previewRoute);
 app.use('/api/admin', adminRoute);
+app.use('/api/proxy', proxyRoute); // ✅ Proxy route registered here
 
 // ✅ Serve uploaded files publicly
 app.use('/files', express.static('uploads'));
