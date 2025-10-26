@@ -1,25 +1,30 @@
-// server/routes/proxy.js
-const express = require('express');
-const axios = require('axios');
+const express = require("express");
+const axios = require("axios");
 const router = express.Router();
 
-// ✅ Universal file proxy for PDFs and DOCs (bypasses CORS)
-router.get('/', async (req, res) => {
-  const { url } = req.query;
-  if (!url) return res.status(400).json({ error: 'Missing URL parameter' });
+router.get("/", async (req, res) => {
+  const fileUrl = req.query.url;
+
+  if (!fileUrl) {
+    return res.status(400).json({ error: "Missing file URL" });
+  }
 
   try {
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
+    // Fetch the file from Cloudinary or local URL
+    const response = await axios.get(fileUrl, {
+      responseType: "arraybuffer",
     });
 
-    const contentType = response.headers['content-type'] || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(response.data);
+    // ✅ Mirror original content type (important for PDFs/docs)
+    const contentType = response.headers["content-type"] || "application/octet-stream";
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    // ✅ Send the actual file buffer
+    res.send(Buffer.from(response.data, "binary"));
   } catch (err) {
-    console.error('❌ Proxy fetch failed:', err.message);
-    res.status(500).json({ error: 'Failed to fetch file' });
+    console.error("❌ Proxy fetch failed:", err.message);
+    res.status(500).json({ error: "Failed to fetch file" });
   }
 });
 
