@@ -1,30 +1,33 @@
-const express = require("express");
-const axios = require("axios");
+// server/routes/proxy.js
+const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 
-router.get("/", async (req, res) => {
-  const fileUrl = req.query.url;
-
-  if (!fileUrl) {
-    return res.status(400).json({ error: "Missing file URL" });
-  }
+router.get('/', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).json({ error: 'Missing URL' });
 
   try {
-    // Fetch the file from Cloudinary or local URL
-    const response = await axios.get(fileUrl, {
-      responseType: "arraybuffer",
+    // ✅ Stream file from remote (Cloudinary, etc.)
+    const response = await axios.get(url, {
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; FileVault/1.0)',
+        'Accept': '*/*',
+        'Accept-Encoding': 'identity',
+      },
     });
 
-    // ✅ Mirror original content type (important for PDFs/docs)
-    const contentType = response.headers["content-type"] || "application/octet-stream";
-    res.setHeader("Content-Type", contentType);
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    // ✅ Pass through correct headers
+    res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
 
-    // ✅ Send the actual file buffer
-    res.send(Buffer.from(response.data, "binary"));
+    // ✅ Stream directly to client
+    response.data.pipe(res);
   } catch (err) {
-    console.error("❌ Proxy fetch failed:", err.message);
-    res.status(500).json({ error: "Failed to fetch file" });
+    console.error('❌ Proxy fetch failed:', err.message);
+    res.status(500).json({ error: 'Failed to fetch file', details: err.message });
   }
 });
 
