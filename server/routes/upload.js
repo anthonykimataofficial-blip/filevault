@@ -17,19 +17,18 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Multer temp storage
+// ✅ Multer temp storage (🚀 no file size limit now)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
+      file.originalname
+    )}`;
     cb(null, uniqueName);
-  }
+  },
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
-});
+const upload = multer({ storage }); // ⚙️ removed the fileSize limit entirely
 
 // ✅ Upload route
 router.post('/', upload.single('file'), async (req, res) => {
@@ -45,24 +44,34 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     console.log(`📤 Uploading "${req.file.originalname}" (${req.file.mimetype}, ${req.file.size} bytes)`);
 
-    // ✅ Upload to Cloudinary
+    // ✅ Upload to Cloudinary (optimized for large files)
     let cloudResult;
     try {
       cloudResult = await cloudinary.uploader.upload(req.file.path, {
         resource_type: 'auto',
         folder: 'filevault_uploads',
+        use_filename: true,
+        unique_filename: false,
+        timeout: 600000, // ⏱️ allow up to 10 minutes for large uploads
       });
       console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
     } catch (cloudErr) {
       console.error('❌ Cloudinary upload failed:', cloudErr.message);
     }
 
-    fs.unlinkSync(req.file.path);
+    // ✅ Clean up local temp file
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (cleanupErr) {
+      console.warn('⚠️ Could not delete temp file:', cleanupErr.message);
+    }
 
+    // ✅ Fallback: if Cloudinary fails, serve from backend
     const finalUrl = cloudResult?.secure_url
       ? cloudResult.secure_url
       : `${process.env.BACKEND_URL || 'https://filevault-backend-a7w4.onrender.com'}/files/${req.file.filename}`;
 
+    // ✅ Save to DB
     const file = new File({
       originalName: req.file.originalname,
       storedName: cloudResult?.public_id || req.file.filename,
@@ -89,6 +98,7 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
+// ✅ Health check for Cloudinary
 router.get('/check-cloudinary', async (req, res) => {
   try {
     const result = await cloudinary.api.ping();
