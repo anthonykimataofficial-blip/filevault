@@ -1,71 +1,95 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './UploadPage.css'; // ⬅️ New CSS file for responsiveness & font
+import './UploadPage.css'; // Keep your CSS styling
 
 function UploadPage() {
   const [file, setFile] = useState(null);
   const [password, setPassword] = useState('');
   const [uploadResult, setUploadResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
-  };
+  const handleFileChange = (e) => setFile(e.target.files[0]);
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    setDragActive(e.type === 'dragenter' || e.type === 'dragover');
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);
   };
 
+  // ✅ Direct upload logic to Cloudinary
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file || !password) {
-      alert("Both file and password are required.");
+      alert('Both file and password are required.');
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("password", password);
-
     try {
-      // ✅ Use the live backend in production, and localhost during local dev
+      setUploading(true);
       const API_BASE =
         process.env.REACT_APP_API_URL ||
-        "https://filevault-backend-a7w4.onrender.com";
+        'https://filevault-backend-a7w4.onrender.com';
 
-      const res = await axios.post(`${API_BASE}/api/upload`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // 1️⃣ Get Cloudinary signature
+      const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
+      const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+
+      // 2️⃣ Upload directly to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', 'filevault_uploads');
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.secure_url)
+        throw new Error('Cloudinary upload failed.');
+
+      // 3️⃣ Send metadata to backend
+      const metaRes = await fetch(`${API_BASE}/api/upload-metadata`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          filePath: uploadData.secure_url,
+          password,
+        }),
       });
 
-      setUploadResult(res.data);
+      const metaData = await metaRes.json();
+      if (!metaRes.ok) throw new Error(metaData.error || 'Metadata save failed.');
+
+      setUploadResult(metaData);
+      alert('✅ File uploaded successfully!');
     } catch (err) {
-      console.error("Upload error:", err.response?.data || err.message);
-      alert("Upload failed.");
+      console.error('❌ Upload error:', err);
+      alert(`Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
     }
   };
 
-  // ✅ Updated copy function (uses live domain dynamically)
   const handleCopy = () => {
     if (uploadResult?.fileId) {
       const fullLink = `${window.location.origin}/preview/${uploadResult.fileId}`;
       navigator.clipboard.writeText(fullLink);
-      alert("🔗 Link copied to clipboard!");
+      alert('🔗 Link copied to clipboard!');
     }
   };
 
@@ -94,64 +118,44 @@ function UploadPage() {
       <nav className="navbar navbar-light bg-light shadow-sm position-relative">
         <div className="container d-flex justify-content-between align-items-center">
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
-            {/* ✅ Fixed logo path */}
-            <img
-              src="/logo.png"
-              alt="Logo"
-              width="60"
-              height="60"
-              className="d-inline-block align-top me-2"
-            />
+            <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
               <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>vooli</div>
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
           </span>
         </div>
-
-        {/* Title visible only on tablets & larger */}
         <div className="welcome-title-container">
-          <h1 className="welcome-title">
-            Welcome to Vooli
-          </h1>
+          <h1 className="welcome-title">Welcome to Vooli</h1>
         </div>
       </nav>
 
-      {/* Main Content */}
+      {/* Main Section */}
       <main className="flex-grow-1 d-flex justify-content-center align-items-center">
         <div className="container py-5" style={{ maxWidth: '600px' }}>
           <h2 className="text-center mb-4 text-white">📤 Secure File Uploader</h2>
 
-        {/* Playful translucent instruction box */}
-<div
-  style={{
-    backgroundColor: 'rgba(10, 25, 75, 0.7)', // deeper blue with transparency
-    color: 'white',
-    borderRadius: '10px',
-    padding: '20px',
-    marginBottom: '25px',
-    backdropFilter: 'blur(6px)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-    fontSize: '0.95rem',
-  }}
->
-  <p style={{ marginBottom: '8px', fontWeight: '600', fontSize: '1.1rem' }}>
-    ⚡ Quick Guide:
-  </p>
-  <ul style={{ listStyleType: 'none', paddingLeft: '0', marginBottom: '0' }}>
-    <li>📁 Upload documents, images, audio, or video</li>
-    <li>🔑 Set a password to protect your file</li>
-    <li>📬 Click <strong>Upload</strong> copy your private link and send to intended receiver </li>
-    
-  </ul>
-</div>
-
+          <div
+            style={{
+              backgroundColor: 'rgba(10, 25, 75, 0.7)',
+              color: 'white',
+              borderRadius: '10px',
+              padding: '20px',
+              marginBottom: '25px',
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            <p style={{ fontWeight: '600', fontSize: '1.1rem' }}>⚡ Quick Guide:</p>
+            <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
+              <li>📁 Upload documents, images, audio, or video</li>
+              <li>🔑 Set a password to protect your file</li>
+              <li>📬 Click <strong>Upload</strong>, copy your private link, and share</li>
+            </ul>
+          </div>
 
           {!uploadResult ? (
             <form onSubmit={handleUpload} className="border p-4 rounded shadow-sm bg-light">
-
-              
-              {/* Drag and Drop Zone */}
               <div
                 className={`mb-3 p-4 text-center border rounded ${dragActive ? 'bg-warning bg-opacity-25' : 'bg-light'}`}
                 style={{ borderStyle: 'dashed', cursor: 'pointer' }}
@@ -181,36 +185,24 @@ function UploadPage() {
                 />
               </div>
 
-              <button type="submit" className="btn btn-primary w-100">Upload</button>
+              <button type="submit" className="btn btn-primary w-100" disabled={uploading}>
+                {uploading ? 'Uploading...' : 'Upload'}
+              </button>
             </form>
           ) : (
             <div className="text-center p-3" style={{ backgroundColor: '#126e67ff', borderRadius: '8px', color: 'white' }}>
               <h5 className="mb-3">✅ Upload Successful!</h5>
-              <p className="mb-2">
-                🔗 <strong>Share this link:</strong>
-              </p>
-
-              {/* Highlighted Link Box */}
+              <p className="mb-2">🔗 <strong>Share this link:</strong></p>
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #f8f9fa, #fdf1d6)', // light grey → cream
+                  background: 'linear-gradient(135deg, #f8f9fa, #fdf1d6)',
                   padding: '12px 18px',
                   borderRadius: '50px',
                   display: 'inline-block',
-                  maxWidth: '100%',
                   wordBreak: 'break-all',
                   border: '1px solid black',
                   boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 6px 14px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.1)';
+                  cursor: 'pointer',
                 }}
               >
                 <a
@@ -225,12 +217,8 @@ function UploadPage() {
               </div>
 
               <div className="d-flex justify-content-center mt-3">
-                <button className="btn btn-outline-light me-2" onClick={handleCopy}>
-                  📋 Copy
-                </button>
-                <button className="btn btn-outline-light" onClick={handleReset}>
-                  🔁 Upload Another
-                </button>
+                <button className="btn btn-outline-light me-2" onClick={handleCopy}>📋 Copy</button>
+                <button className="btn btn-outline-light" onClick={handleReset}>🔁 Upload Another</button>
               </div>
             </div>
           )}
