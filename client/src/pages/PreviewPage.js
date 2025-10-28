@@ -5,11 +5,13 @@ const PreviewPage = () => {
   const { fileId } = useParams();
   const [fileData, setFileData] = useState(null);
   const [error, setError] = useState(null);
+  const [pdfError, setPdfError] = useState(false);
 
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        const API_BASE = process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com";
+        const API_BASE =
+          process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
         const res = await fetch(`${API_BASE}/api/file/${fileId}`);
         if (!res.ok) throw new Error('File not found or expired');
         const data = await res.json();
@@ -49,19 +51,34 @@ const PreviewPage = () => {
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
-  const API_BASE = process.env.REACT_APP_API_URL || "https://filevault-backend-a7w4.onrender.com";
-  const fileURL = url.startsWith('http')
-    ? url
-    : `${API_BASE}/files/${url}`;
+  const API_BASE = process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
+  const fileURL = url.startsWith('http') ? url : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
-    // ✅ PDFs and Docs now use backend proxy (no Google Docs viewer)
-    if (['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt)) {
-      const proxyUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
+    const isDocType = ['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt);
+    const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt);
+    const isText = lowerExt === 'txt';
+    const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
+    const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
+
+    if (isDocType) {
+      const isCloud = fileURL.startsWith('https://res.cloudinary.com');
+      const safeUrl = isCloud
+        ? fileURL
+        : `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
+
+      const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
+        safeUrl
+      )}&embedded=true`;
+      const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(
+        safeUrl
+      )}&embedded=true`;
+      const viewerUrl = pdfError ? driveUrl : gviewUrl;
 
       return (
         <iframe
-          src={proxyUrl}
+          src={viewerUrl}
+          onError={() => setPdfError(true)}
           style={{
             width: '100%',
             height: '80vh',
@@ -70,13 +87,12 @@ const PreviewPage = () => {
             zIndex: 2,
           }}
           title="Document Preview"
-          sandbox="allow-same-origin allow-scripts"
+          sandbox="allow-same-origin allow-scripts allow-popups"
         />
       );
     }
 
-    // 🖼️ Images
-    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt)) {
+    if (isImage) {
       return (
         <img
           src={fileURL}
@@ -92,8 +108,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 📜 Text files
-    if (lowerExt === 'txt') {
+    if (isText) {
       return (
         <iframe
           src={fileURL}
@@ -103,8 +118,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎥 Video
-    if (['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt)) {
+    if (isVideo) {
       return (
         <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
           <source src={fileURL} type={`video/${lowerExt}`} />
@@ -112,8 +126,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🎧 Audio
-    if (['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt)) {
+    if (isAudio) {
       return (
         <audio controls style={{ width: '100%', zIndex: 2 }}>
           <source src={fileURL} type={`audio/${lowerExt}`} />
@@ -135,7 +148,10 @@ const PreviewPage = () => {
       }}
     >
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
-        <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
+        <div
+          className="container-fluid d-flex justify-content-between align-items-center"
+          style={{ position: 'relative' }}
+        >
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
             <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
@@ -160,7 +176,9 @@ const PreviewPage = () => {
           >
             Welcome to Vooli
           </h1>
-          <Link to="/" className="btn btn-primary">Click here to upload files</Link>
+          <Link to="/" className="btn btn-primary">
+            Click here to upload files
+          </Link>
         </div>
       </nav>
 
@@ -210,16 +228,34 @@ const PreviewPage = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link to={`/download/${fileId}`} className="btn btn-outline-primary" style={{ padding: '8px 20px', fontWeight: '500' }}>
+          <Link
+            to={`/download/${fileId}`}
+            className="btn btn-outline-primary"
+            style={{ padding: '8px 20px', fontWeight: '500' }}
+          >
             🔒 Enter password to download
           </Link>
         </div>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#555' }}>
+        <div
+          style={{
+            marginTop: '1.5rem',
+            textAlign: 'center',
+            fontSize: '0.9rem',
+            color: '#555',
+          }}
+        >
           👁️ Views: {views} | 📥 Downloads: {downloads}
         </div>
 
-        <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
+        <p
+          style={{
+            marginTop: '1rem',
+            textAlign: 'center',
+            fontSize: '0.85rem',
+            color: '#888',
+          }}
+        >
           ⏳ Uploaded files will be auto-deleted after 24 hours.
         </p>
       </div>
