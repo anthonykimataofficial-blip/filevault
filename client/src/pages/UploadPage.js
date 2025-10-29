@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './UploadPage.css'; // Keep your CSS styling
+import './UploadPage.css';
 
 function UploadPage() {
   const [file, setFile] = useState(null);
@@ -40,24 +40,23 @@ function UploadPage() {
 
       // 1️⃣ Get Cloudinary signature
       const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
-      const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+      const { timestamp, signature, api_key, cloud_name } = await signRes.json();
 
       // 2️⃣ Upload directly to Cloudinary
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('api_key', apiKey);
+      formData.append('api_key', api_key);
       formData.append('timestamp', timestamp);
       formData.append('signature', signature);
       formData.append('folder', 'filevault_uploads');
 
       const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
         { method: 'POST', body: formData }
       );
 
       const uploadData = await uploadRes.json();
-      if (!uploadData.secure_url)
-        throw new Error('Cloudinary upload failed.');
+      if (!uploadData.secure_url) throw new Error('Cloudinary upload failed.');
 
       // 3️⃣ Send metadata to backend
       const metaRes = await fetch(`${API_BASE}/api/upload-metadata`, {
@@ -157,7 +156,9 @@ function UploadPage() {
           {!uploadResult ? (
             <form onSubmit={handleUpload} className="border p-4 rounded shadow-sm bg-light">
               <div
-                className={`mb-3 p-4 text-center border rounded ${dragActive ? 'bg-warning bg-opacity-25' : 'bg-light'}`}
+                className={`mb-3 p-4 text-center border rounded ${
+                  dragActive ? 'bg-warning bg-opacity-25' : 'bg-light'
+                }`}
                 style={{ borderStyle: 'dashed', cursor: 'pointer' }}
                 onClick={() => document.getElementById('fileInput').click()}
               >
@@ -190,7 +191,14 @@ function UploadPage() {
               </button>
             </form>
           ) : (
-            <div className="text-center p-3" style={{ backgroundColor: '#126e67ff', borderRadius: '8px', color: 'white' }}>
+            <div
+              className="text-center p-3"
+              style={{
+                backgroundColor: '#126e67ff',
+                borderRadius: '8px',
+                color: 'white',
+              }}
+            >
               <h5 className="mb-3">✅ Upload Successful!</h5>
               <p className="mb-2">🔗 <strong>Share this link:</strong></p>
               <div
@@ -217,8 +225,12 @@ function UploadPage() {
               </div>
 
               <div className="d-flex justify-content-center mt-3">
-                <button className="btn btn-outline-light me-2" onClick={handleCopy}>📋 Copy</button>
-                <button className="btn btn-outline-light" onClick={handleReset}>🔁 Upload Another</button>
+                <button className="btn btn-outline-light me-2" onClick={handleCopy}>
+                  📋 Copy
+                </button>
+                <button className="btn btn-outline-light" onClick={handleReset}>
+                  🔁 Upload Another
+                </button>
               </div>
             </div>
           )}
