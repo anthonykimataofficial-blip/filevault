@@ -38,37 +38,43 @@ function UploadPage() {
         process.env.REACT_APP_API_URL ||
         'https://filevault-backend-a7w4.onrender.com';
 
-     // 1️⃣ Get Cloudinary signature
-const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
-const signData = await signRes.json();
-const { timestamp, signature, api_key: apiKey, cloud_name: cloudName } = signData;
+      // 1️⃣ Get Cloudinary signature
+      const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
+      const signData = await signRes.json();
 
+      // ✅ Explicitly define each variable (ESLint-safe)
+      const timestamp = signData.timestamp;
+      const signature = signData.signature;
+      const apiKey = signData.api_key;
+      const cloudName = signData.cloud_name;
 
       // 2️⃣ Upload directly to Cloudinary
       const formData = new FormData();
       formData.append('file', file);
-formData.append('api_key', apiKey);
-formData.append('timestamp', timestamp);
-formData.append('signature', signature);
-formData.append('folder', 'filevault_uploads');
-
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', 'filevault_uploads');
 
       const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
         { method: 'POST', body: formData }
       );
 
-     const uploadData = await uploadRes.json();
-console.log("Cloudinary response:", uploadData);
+      const uploadData = await uploadRes.json();
+      console.log('Cloudinary response:', uploadData);
 
-if (!uploadRes.ok) {
-  throw new Error(uploadData.error?.message || uploadData.message || 'Cloudinary upload failed.');
-}
+      if (!uploadRes.ok) {
+        throw new Error(
+          uploadData.error?.message ||
+          uploadData.message ||
+          'Cloudinary upload failed.'
+        );
+      }
 
-if (!uploadData.secure_url) {
-  throw new Error('No secure_url returned from Cloudinary.');
-}
-
+      if (!uploadData.secure_url) {
+        throw new Error('No secure_url returned from Cloudinary.');
+      }
 
       // 3️⃣ Send metadata to backend
       const metaRes = await fetch(`${API_BASE}/api/upload-metadata`, {
