@@ -64,7 +64,7 @@ router.get('/files', verifyAdminToken, async (req, res) => {
   }
 });
 
-// ✅ Delete a file by ID
+// ✅ Delete a single file by ID
 router.delete('/files/:id', verifyAdminToken, async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
@@ -72,7 +72,6 @@ router.delete('/files/:id', verifyAdminToken, async (req, res) => {
       return res.status(404).json({ success: false, message: 'File not found' });
     }
 
-    // Use the stored filePath directly from DB
     const filePath = file.filePath;
     if (!filePath) {
       console.error('❌ No filePath found in DB:', file);
@@ -94,6 +93,37 @@ router.delete('/files/:id', verifyAdminToken, async (req, res) => {
   } catch (err) {
     console.error('❌ Error deleting file:', err);
     res.status(500).json({ success: false, message: 'Server error while deleting file' });
+  }
+});
+
+// ✅ Bulk delete multiple files
+router.post('/files/bulk-delete', verifyAdminToken, async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'No file IDs provided' });
+    }
+
+    const files = await File.find({ _id: { $in: ids } });
+
+    for (const file of files) {
+      try {
+        const filePath = file.filePath;
+        if (filePath && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`🗑️ Deleted file: ${filePath}`);
+        }
+        await file.deleteOne();
+      } catch (err) {
+        console.error(`⚠️ Error deleting file ${file._id}:`, err.message);
+      }
+    }
+
+    res.json({ success: true, message: `${files.length} files deleted successfully.` });
+  } catch (err) {
+    console.error('❌ Bulk delete error:', err);
+    res.status(500).json({ success: false, message: 'Server error during bulk delete' });
   }
 });
 
