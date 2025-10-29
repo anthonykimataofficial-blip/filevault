@@ -108,25 +108,41 @@ const PreviewPage = () => {
       );
     }
 
-    // 🧠 Secure + scrollable text preview (single scrollbar)
+    // 🧠 Secure text file preview: scrollable + protected
     if (isText) {
       return (
-        <iframe
-          src={fileURL}
-          style={{
-            width: '100%',
-            height: '500px',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            backgroundColor: '#fff',
-            overflowY: 'auto', // ✅ Vertical scroll only
-            overflowX: 'hidden',
-            userSelect: 'none',
-            pointerEvents: 'none', // Disable copying
-          }}
-          title="Text Preview"
-          sandbox="allow-same-origin"
-        />
+        <div style={{ position: 'relative', width: '100%', height: '500px' }}>
+          {/* The scrollable iframe */}
+          <iframe
+            src={fileURL}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              backgroundColor: '#fff',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              userSelect: 'none',
+              zIndex: 1,
+            }}
+            title="Text Preview"
+            sandbox="allow-same-origin"
+          />
+          {/* Invisible anti-copy overlay (leaves scroll strip on right side) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 20px)', // leave 20px on the right for scrolling
+              height: '100%',
+              zIndex: 3,
+              backgroundColor: 'transparent',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+        </div>
       );
     }
 
