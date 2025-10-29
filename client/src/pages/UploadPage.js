@@ -39,8 +39,9 @@ function UploadPage() {
         'https://filevault-backend-a7w4.onrender.com';
 
       // 1️⃣ Get Cloudinary signature
-      const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
-      const { timestamp, signature, api_key, cloud_name } = await signRes.json();
+     const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
+const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+
 
       // 2️⃣ Upload directly to Cloudinary
       const formData = new FormData();
