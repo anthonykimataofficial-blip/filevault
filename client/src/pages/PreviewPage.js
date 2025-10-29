@@ -108,11 +108,21 @@ const PreviewPage = () => {
       );
     }
 
+    // 🛡️ Non-copyable text file preview
     if (isText) {
       return (
         <iframe
           src={fileURL}
-          style={{ width: '100%', height: '500px', zIndex: 2 }}
+          style={{
+            width: '100%',
+            height: '500px',
+            zIndex: 2,
+            userSelect: 'none',
+            pointerEvents: 'none',
+            backgroundColor: '#fff',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+          }}
           title="Text Preview"
         />
       );
