@@ -55,8 +55,17 @@ function UploadPage() {
         { method: 'POST', body: formData }
       );
 
-      const uploadData = await uploadRes.json();
-      if (!uploadData.secure_url) throw new Error('Cloudinary upload failed.');
+     const uploadData = await uploadRes.json();
+console.log("Cloudinary response:", uploadData);
+
+if (!uploadRes.ok) {
+  throw new Error(uploadData.error?.message || uploadData.message || 'Cloudinary upload failed.');
+}
+
+if (!uploadData.secure_url) {
+  throw new Error('No secure_url returned from Cloudinary.');
+}
+
 
       // 3️⃣ Send metadata to backend
       const metaRes = await fetch(`${API_BASE}/api/upload-metadata`, {
