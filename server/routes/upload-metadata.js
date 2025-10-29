@@ -1,41 +1,44 @@
 // server/routes/upload-metadata.js
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const File = require('../models/File');
+const express = require("express");
 const router = express.Router();
+const bcrypt = require("bcryptjs");
+const File = require("../models/File");
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const { url, originalName, size, password } = req.body;
+    const { originalName, fileType, fileSize, filePath, password } = req.body;
 
-    if (!url || !originalName || !password) {
-      return res.status(400).json({ error: 'Missing file metadata or password.' });
+    console.log("📦 Incoming metadata:", req.body);
+
+    // Check all required fields
+    if (!originalName || !fileType || !fileSize || !filePath || !password) {
+      return res.status(400).json({ error: "Missing file metadata or password." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hrs
 
-    const file = new File({
+    const newFile = new File({
       originalName,
-      storedName: url,
-      fileType: originalName.split('.').pop(),
-      fileSize: size,
-      filePath: url,
+      storedName: originalName,
+      fileType,
+      fileSize,
+      filePath,
       password: hashedPassword,
       expiresAt,
     });
 
-    await file.save();
+    await newFile.save();
+
+    console.log("✅ Metadata saved:", newFile._id);
 
     res.json({
-      message: '✅ File metadata saved successfully',
-      fileId: file._id,
-      previewLink: `${process.env.FRONTEND_URL}/preview/${file._id}`,
-      downloadLink: `${process.env.FRONTEND_URL}/download/${file._id}`,
+      message: "✅ File metadata saved successfully.",
+      fileId: newFile._id,
     });
   } catch (err) {
-    console.error('❌ Metadata save error:', err.message);
-    res.status(500).json({ error: 'Server error saving metadata' });
+    console.error("❌ Metadata save error:", err);
+    res.status(500).json({ error: "Server error saving metadata." });
   }
 });
 
