@@ -108,23 +108,32 @@ const PreviewPage = () => {
       );
     }
 
-    // 🛡️ Non-copyable text file preview
+    // 🧠 Non-copyable but scrollable text file preview
     if (isText) {
       return (
-        <iframe
-          src={fileURL}
+        <div
           style={{
+            position: 'relative',
             width: '100%',
             height: '500px',
-            zIndex: 2,
-            userSelect: 'none',
-            pointerEvents: 'none',
-            backgroundColor: '#fff',
+            overflow: 'auto', // ✅ Allows scrolling
             border: '1px solid #ddd',
             borderRadius: '8px',
+            backgroundColor: '#fff',
           }}
-          title="Text Preview"
-        />
+        >
+          <iframe
+            src={fileURL}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              pointerEvents: 'none', // 🚫 Prevent interaction & copying
+              userSelect: 'none',
+            }}
+            title="Text Preview"
+          />
+        </div>
       );
     }
 
