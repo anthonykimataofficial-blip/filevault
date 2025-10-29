@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './UploadPage.css';
 
@@ -8,6 +9,7 @@ function UploadPage() {
   const [uploadResult, setUploadResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
@@ -24,7 +26,7 @@ function UploadPage() {
     if (e.dataTransfer.files?.[0]) setFile(e.dataTransfer.files[0]);
   };
 
-  // ✅ Direct upload logic to Cloudinary
+  // ✅ Direct upload logic to Cloudinary (Axios)
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file || !password) {
@@ -34,21 +36,21 @@ function UploadPage() {
 
     try {
       setUploading(true);
+      setProgress(0);
+
       const API_BASE =
         process.env.REACT_APP_API_URL ||
         'https://filevault-backend-a7w4.onrender.com';
 
-      // 1️⃣ Get Cloudinary signature
+      // 1️⃣ Get Cloudinary signature from backend
       const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
       const signData = await signRes.json();
-
-      // ✅ Explicitly define each variable (ESLint-safe)
       const timestamp = signData.timestamp;
       const signature = signData.signature;
       const apiKey = signData.api_key;
       const cloudName = signData.cloud_name;
 
-      // 2️⃣ Upload directly to Cloudinary
+      // 2️⃣ Upload directly to Cloudinary using Axios
       const formData = new FormData();
       formData.append('file', file);
       formData.append('api_key', apiKey);
@@ -56,22 +58,25 @@ function UploadPage() {
       formData.append('signature', signature);
       formData.append('folder', 'filevault_uploads');
 
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-        { method: 'POST', body: formData }
+      console.log(
+        `🚀 Uploading ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)...`
       );
 
-      const uploadData = await uploadRes.json();
-      console.log('Cloudinary response:', uploadData);
+      const uploadRes = await axios.post(
+        `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setProgress(percent);
+          },
+          timeout: 0, // Disable timeout for large uploads
+        }
+      );
 
-      if (!uploadRes.ok) {
-        throw new Error(
-          uploadData.error?.message ||
-          uploadData.message ||
-          'Cloudinary upload failed.'
-        );
-      }
-
+      const uploadData = uploadRes.data;
       if (!uploadData.secure_url) {
         throw new Error('No secure_url returned from Cloudinary.');
       }
@@ -99,6 +104,7 @@ function UploadPage() {
       alert(`Upload failed: ${err.message}`);
     } finally {
       setUploading(false);
+      setProgress(0);
     }
   };
 
@@ -114,6 +120,7 @@ function UploadPage() {
     setFile(null);
     setPassword('');
     setUploadResult(null);
+    setProgress(0);
   };
 
   return (
@@ -203,6 +210,18 @@ function UploadPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+
+              {uploading && (
+                <div className="progress mb-3">
+                  <div
+                    className="progress-bar progress-bar-striped progress-bar-animated"
+                    role="progressbar"
+                    style={{ width: `${progress}%` }}
+                  >
+                    {progress}%
+                  </div>
+                </div>
+              )}
 
               <button type="submit" className="btn btn-primary w-100" disabled={uploading}>
                 {uploading ? 'Uploading...' : 'Upload'}
