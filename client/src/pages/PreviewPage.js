@@ -108,32 +108,25 @@ const PreviewPage = () => {
       );
     }
 
-    // 🧠 Non-copyable but scrollable text file preview
+    // 🧠 Secure + scrollable text preview (single scrollbar)
     if (isText) {
       return (
-        <div
+        <iframe
+          src={fileURL}
           style={{
-            position: 'relative',
             width: '100%',
             height: '500px',
-            overflow: 'auto', // ✅ Allows scrolling
             border: '1px solid #ddd',
             borderRadius: '8px',
             backgroundColor: '#fff',
+            overflowY: 'auto', // ✅ Vertical scroll only
+            overflowX: 'hidden',
+            userSelect: 'none',
+            pointerEvents: 'none', // Disable copying
           }}
-        >
-          <iframe
-            src={fileURL}
-            style={{
-              width: '100%',
-              height: '100%',
-              border: 'none',
-              pointerEvents: 'none', // 🚫 Prevent interaction & copying
-              userSelect: 'none',
-            }}
-            title="Text Preview"
-          />
-        </div>
+          title="Text Preview"
+          sandbox="allow-same-origin"
+        />
       );
     }
 
