@@ -30,9 +30,9 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ Increase payload limits for large uploads
-app.use(express.json({ limit: '2gb' }));
-app.use(express.urlencoded({ limit: '2gb', extended: true }));
+// ✅ Remove all file size limits (let Render handle it)
+app.use(express.json({ limit: '50gb' }));
+app.use(express.urlencoded({ limit: '50gb', extended: true }));
 
 // 🩵 Ensure uploads directory exists
 const uploadDir = path.join(__dirname, 'uploads');
@@ -49,8 +49,8 @@ mongoose.connect(process.env.MONGODB_URI)
 // 🔍 Log all incoming requests for debugging
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.originalUrl}`);
-  req.setTimeout(15 * 60 * 1000); // 15 minutes
-  res.setTimeout(15 * 60 * 1000);
+  req.setTimeout(30 * 60 * 1000); // 30 minutes timeout for large uploads
+  res.setTimeout(30 * 60 * 1000);
   next();
 });
 
@@ -60,7 +60,7 @@ const downloadRoute = require('./routes/download');
 const previewRoute = require('./routes/preview');
 const adminRoute = require('./routes/admin');
 const proxyRoute = require('./routes/proxy');
-const signCloudinaryRoute = require('./routes/sign-cloudinary'); // ✅ Added
+const signCloudinaryRoute = require('./routes/sign-cloudinary');
 const uploadMetadataRoute = require('./routes/upload-metadata');
 
 // ✅ Mount routes
@@ -69,9 +69,8 @@ app.use('/api/download', downloadRoute);
 app.use('/api/file', previewRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/proxy', proxyRoute);
-app.use('/api/sign-cloudinary', signCloudinaryRoute); // ✅ Added for direct uploads
+app.use('/api/sign-cloudinary', signCloudinaryRoute);
 app.use('/api/upload-metadata', uploadMetadataRoute);
-
 
 // ✅ Serve uploaded files publicly
 app.use('/files', express.static('uploads'));
@@ -104,6 +103,6 @@ setInterval(async () => {
 
 // ✅ Start server (Render requires 0.0.0.0 binding)
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => 
+app.listen(PORT, '0.0.0.0', () =>
   console.log(`🚀 Server running on port ${PORT}`)
 );
