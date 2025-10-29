@@ -38,9 +38,10 @@ function UploadPage() {
         process.env.REACT_APP_API_URL ||
         'https://filevault-backend-a7w4.onrender.com';
 
-      // 1️⃣ Get Cloudinary signature
-     const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
-const { timestamp, signature, apiKey, cloudName } = await signRes.json();
+     // 1️⃣ Get Cloudinary signature
+const signRes = await fetch(`${API_BASE}/api/sign-cloudinary`);
+const signData = await signRes.json();
+const { timestamp, signature, api_key: apiKey, cloud_name: cloudName } = signData;
 
 
       // 2️⃣ Upload directly to Cloudinary
