@@ -11,7 +11,9 @@ const app = express();
 
 // ✅ Allowed origins for CORS
 const allowedOrigins = [
-  'https://filevault-eight.vercel.app', // live site
+  'https://filevault-eight.vercel.app', 
+  'https://voolifilevault.com',
+  'https://www.voolifilevault.com',// live site
   'http://localhost:3000'               // local dev
 ];
 
