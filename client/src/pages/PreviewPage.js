@@ -55,7 +55,8 @@ const PreviewPage = () => {
   const fileURL = url.startsWith('http') ? url : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
-    const isDocType = ['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt);
+    // ✅ Added Excel file support
+    const isDocType = ['pdf', 'docx', 'doc', 'pptx', 'xls', 'xlsx', 'csv'].includes(lowerExt);
     const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt);
     const isText = lowerExt === 'txt';
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
@@ -112,7 +113,6 @@ const PreviewPage = () => {
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
-          {/* The scrollable iframe */}
           <iframe
             src={fileURL}
             style={{
@@ -129,13 +129,12 @@ const PreviewPage = () => {
             title="Text Preview"
             sandbox="allow-same-origin"
           />
-          {/* Invisible anti-copy overlay (leaves scroll strip on right side) */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: 'calc(100% - 20px)', // leave 20px on the right for scrolling
+              width: 'calc(100% - 20px)',
               height: '100%',
               zIndex: 3,
               backgroundColor: 'transparent',
