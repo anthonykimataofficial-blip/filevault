@@ -11,26 +11,28 @@ const app = express();
 
 // ✅ Allowed origins for CORS
 const allowedOrigins = [
-  'https://filevault-eight.vercel.app', 
+  'https://filevault-eight.vercel.app',
   'https://voolifilevault.com',
-  'https://www.voolifilevault.com',// live site
-  'http://localhost:3000'               // local dev
+  'https://www.voolifilevault.com', // live site
+  'http://localhost:3000' // local dev
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow Postman, etc.
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      console.warn('🚫 CORS blocked for origin:', origin);
-      return callback(new Error('❌ Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'DELETE', 'PUT'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow Postman, etc.
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.warn('🚫 CORS blocked for origin:', origin);
+        return callback(new Error('❌ Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  })
+);
 
 // ✅ Remove all file size limits (let Render handle it)
 app.use(express.json({ limit: '50gb' }));
@@ -44,7 +46,8 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // ✅ Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected successfully'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
@@ -64,6 +67,7 @@ const adminRoute = require('./routes/admin');
 const proxyRoute = require('./routes/proxy');
 const signCloudinaryRoute = require('./routes/sign-cloudinary');
 const uploadMetadataRoute = require('./routes/upload-metadata');
+const previewExcelRoute = require('./routes/preview-excel'); // ✅ added
 
 // ✅ Mount routes
 app.use('/api/upload', uploadRoute);
@@ -73,6 +77,7 @@ app.use('/api/admin', adminRoute);
 app.use('/api/proxy', proxyRoute);
 app.use('/api/sign-cloudinary', signCloudinaryRoute);
 app.use('/api/upload-metadata', uploadMetadataRoute);
+app.use('/api/preview-excel', previewExcelRoute); // ✅ added
 
 // ✅ Serve uploaded files publicly
 app.use('/files', express.static('uploads'));
