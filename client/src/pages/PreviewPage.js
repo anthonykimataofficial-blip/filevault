@@ -55,13 +55,14 @@ const PreviewPage = () => {
   const fileURL = url.startsWith('http') ? url : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
-    // ✅ Added Excel file support
-    const isDocType = ['pdf', 'docx', 'doc', 'pptx', 'xls', 'xlsx', 'csv'].includes(lowerExt);
+    const isDocType = ['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt);
+    const isExcel = ['xls', 'xlsx', 'csv'].includes(lowerExt);
     const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt);
     const isText = lowerExt === 'txt';
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
+    // ✅ Google Docs Viewer (PDF, DOC, PPT)
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -80,16 +81,41 @@ const PreviewPage = () => {
         <iframe
           src={viewerUrl}
           onError={() => setPdfError(true)}
-          style={{
-            width: '100%',
-            height: '80vh',
-            border: 'none',
-            backgroundColor: '#fff',
-            zIndex: 2,
-          }}
+          style={iframeStyle}
           title="Document Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
+      );
+    }
+
+    // ✅ Microsoft Office Read-Only Viewer for Excel
+    if (isExcel) {
+      const readOnlyExcelUrl = `https://view.officeapps.live.com/embedview.aspx?src=${encodeURIComponent(
+        fileURL
+      )}`;
+      return (
+        <div style={{ position: 'relative', width: '100%' }}>
+          <iframe
+            src={readOnlyExcelUrl}
+            style={iframeStyle}
+            title="Excel Preview (Read-Only)"
+            sandbox="allow-same-origin allow-scripts allow-popups"
+          />
+          {/* Overlay to block toolbar interactions */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '40px', // only cover the top toolbar area
+              backgroundColor: 'transparent',
+              zIndex: 3,
+              pointerEvents: 'auto',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+          />
+        </div>
       );
     }
 
@@ -104,12 +130,13 @@ const PreviewPage = () => {
             display: 'block',
             margin: '0 auto',
             zIndex: 2,
+            borderRadius: '8px',
           }}
         />
       );
     }
 
-    // 🧠 Secure text file preview: scrollable + protected
+    // 🧠 Secure text file preview (scrollable + protected)
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
@@ -162,6 +189,15 @@ const PreviewPage = () => {
     }
 
     return <p>⚠️ Preview not available for this file type.</p>;
+  };
+
+  const iframeStyle = {
+    width: '100%',
+    height: '80vh',
+    border: 'none',
+    backgroundColor: '#fff',
+    zIndex: 2,
+    borderRadius: '10px',
   };
 
   return (
@@ -304,6 +340,12 @@ const PreviewPage = () => {
       </footer>
 
       <style>{`
+        @media (max-width: 768px) {
+          iframe {
+            height: 65vh !important;
+          }
+        }
+
         @media (min-width: 768px) {
           .welcome-heading {
             display: block !important;
