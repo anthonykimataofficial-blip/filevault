@@ -90,9 +90,10 @@ const PreviewPage = () => {
 
     // ✅ Microsoft Office Read-Only Viewer for Excel
     if (isExcel) {
-      const readOnlyExcelUrl = `https://view.officeapps.live.com/embedview.aspx?src=${encodeURIComponent(
+      const readOnlyExcelUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
         fileURL
-      )}`;
+      )}&wdAllowInteractivity=False&wdHideHeaders=True&wdHideGridlines=False`;
+
       return (
         <div style={{ position: 'relative', width: '100%' }}>
           <iframe
@@ -100,20 +101,6 @@ const PreviewPage = () => {
             style={iframeStyle}
             title="Excel Preview (Read-Only)"
             sandbox="allow-same-origin allow-scripts allow-popups"
-          />
-          {/* Overlay to block toolbar interactions */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '40px', // only cover the top toolbar area
-              backgroundColor: 'transparent',
-              zIndex: 3,
-              pointerEvents: 'auto',
-            }}
-            onContextMenu={(e) => e.preventDefault()}
           />
         </div>
       );
