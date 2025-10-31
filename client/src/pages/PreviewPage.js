@@ -51,7 +51,8 @@ const PreviewPage = () => {
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
-  const API_BASE = process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
+  const API_BASE =
+    process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
   const fileURL = url.startsWith('http') ? url : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
@@ -88,16 +89,15 @@ const PreviewPage = () => {
       );
     }
 
-    // ✅ Excel/CSV files via proxy + Office Viewer (more reliable)
+    // ✅ Excel/CSV files via new backend preview-excel route
     if (isExcel) {
-      const safeUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
-      const excelViewer = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-        safeUrl
+      const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
+        fileURL
       )}`;
 
       return (
         <iframe
-          src={excelViewer}
+          src={excelPreviewUrl}
           style={iframeStyle}
           title="Excel Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
