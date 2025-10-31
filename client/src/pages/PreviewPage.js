@@ -62,7 +62,7 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ✅ Google Docs Viewer (PDF, DOC, PPT)
+    // ✅ Google Docs Viewer for PDF/DOC/PPT
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -88,21 +88,20 @@ const PreviewPage = () => {
       );
     }
 
-    // ✅ Microsoft Office Read-Only Viewer for Excel
+    // ✅ Excel files via proxy (safer)
     if (isExcel) {
-      const readOnlyExcelUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-        fileURL
-      )}&wdAllowInteractivity=False&wdHideHeaders=True&wdHideGridlines=False`;
+      const proxiedExcelUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
+      const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+        proxiedExcelUrl
+      )}`;
 
       return (
-        <div style={{ position: 'relative', width: '100%' }}>
-          <iframe
-            src={readOnlyExcelUrl}
-            style={iframeStyle}
-            title="Excel Preview (Read-Only)"
-            sandbox="allow-same-origin allow-scripts allow-popups"
-          />
-        </div>
+        <iframe
+          src={officeViewerUrl}
+          style={iframeStyle}
+          title="Excel Preview"
+          sandbox="allow-same-origin allow-scripts allow-popups"
+        />
       );
     }
 
@@ -123,7 +122,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🧠 Secure text file preview (scrollable + protected)
+    // 🧠 Secure text preview
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
