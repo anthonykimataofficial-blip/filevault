@@ -10,19 +10,24 @@ router.get('/', async (req, res) => {
   try {
     console.log('🌀 Proxy fetching:', url);
 
-    // Only add Cloudinary auth if credentials exist
     const headers = {};
-    if (url.includes('res.cloudinary.com') && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    // Add Cloudinary auth if needed
+    if (
+      url.includes('res.cloudinary.com') &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+    ) {
       const auth = Buffer.from(
         `${process.env.CLOUDINARY_API_KEY}:${process.env.CLOUDINARY_API_SECRET}`
       ).toString('base64');
       headers['Authorization'] = `Basic ${auth}`;
     }
 
+    // Fetch the file from its original source
     const response = await axios.get(url, {
       responseType: 'arraybuffer',
       headers,
-      validateStatus: () => true, // Prevent axios from throwing on 401
+      validateStatus: () => true,
     });
 
     if (response.status >= 400) {
@@ -33,9 +38,18 @@ router.get('/', async (req, res) => {
       });
     }
 
-    Object.entries(response.headers).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
+    // ✅ Allow anyone to access this route (public)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Forward headers like content-type and disposition
+    if (response.headers['content-type']) {
+      res.setHeader('Content-Type', response.headers['content-type']);
+    }
+    if (response.headers['content-disposition']) {
+      res.setHeader('Content-Disposition', response.headers['content-disposition']);
+    }
 
     res.send(response.data);
   } catch (err) {

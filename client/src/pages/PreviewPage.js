@@ -88,16 +88,16 @@ const PreviewPage = () => {
       );
     }
 
-    // ✅ Excel files via proxy (safer)
+    // ✅ Excel/CSV files via proxy + Office Viewer (more reliable)
     if (isExcel) {
-      const proxiedExcelUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
-      const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-        proxiedExcelUrl
+      const safeUrl = `${API_BASE}/api/proxy?url=${encodeURIComponent(fileURL)}`;
+      const excelViewer = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+        safeUrl
       )}`;
 
       return (
         <iframe
-          src={officeViewerUrl}
+          src={excelViewer}
           style={iframeStyle}
           title="Excel Preview"
           sandbox="allow-same-origin allow-scripts allow-popups"
