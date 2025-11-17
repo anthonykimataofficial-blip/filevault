@@ -63,7 +63,7 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ✅ Google Docs Viewer for PDF/DOC/PPT
+    // ===== DOC/PDF/PPT (Sandboxed Google Viewer – Option 2) =====
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -76,6 +76,7 @@ const PreviewPage = () => {
       const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(
         safeUrl
       )}&embedded=true`;
+
       const viewerUrl = pdfError ? driveUrl : gviewUrl;
 
       return (
@@ -84,12 +85,13 @@ const PreviewPage = () => {
           onError={() => setPdfError(true)}
           style={iframeStyle}
           title="Document Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
+          sandbox="allow-same-origin allow-scripts allow-forms"
+          referrerPolicy="no-referrer"
         />
       );
     }
 
-    // ✅ Excel/CSV files via new backend preview-excel route
+    // ===== Excel/CSV =====
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
@@ -100,7 +102,8 @@ const PreviewPage = () => {
           src={excelPreviewUrl}
           style={iframeStyle}
           title="Excel Preview"
-          sandbox="allow-same-origin allow-scripts allow-popups"
+          sandbox="allow-same-origin allow-scripts allow-forms"
+          referrerPolicy="no-referrer"
         />
       );
     }
@@ -122,7 +125,7 @@ const PreviewPage = () => {
       );
     }
 
-    // 🧠 Secure text preview
+    // ===== TEXT =====
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
@@ -141,6 +144,7 @@ const PreviewPage = () => {
             }}
             title="Text Preview"
             sandbox="allow-same-origin"
+            referrerPolicy="no-referrer"
           />
           <div
             style={{
@@ -197,10 +201,7 @@ const PreviewPage = () => {
       }}
     >
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
-        <div
-          className="container-fluid d-flex justify-content-between align-items-center"
-          style={{ position: 'relative' }}
-        >
+        <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
             <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
@@ -208,6 +209,7 @@ const PreviewPage = () => {
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
           </span>
+
           <h1
             style={{
               margin: 0,
@@ -225,6 +227,7 @@ const PreviewPage = () => {
           >
             Welcome to Vooli
           </h1>
+
           <Link to="/" className="btn btn-primary">
             Click here to upload files
           </Link>
@@ -247,6 +250,7 @@ const PreviewPage = () => {
         </h2>
 
         <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
+          {/* Watermark */}
           <div
             style={{
               position: 'absolute',
@@ -273,6 +277,7 @@ const PreviewPage = () => {
             />
           </div>
 
+          {/* Preview */}
           <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
         </div>
 
@@ -286,25 +291,11 @@ const PreviewPage = () => {
           </Link>
         </div>
 
-        <div
-          style={{
-            marginTop: '1.5rem',
-            textAlign: 'center',
-            fontSize: '0.9rem',
-            color: '#555',
-          }}
-        >
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#555' }}>
           👁️ Views: {views} | 📥 Downloads: {downloads}
         </div>
 
-        <p
-          style={{
-            marginTop: '1rem',
-            textAlign: 'center',
-            fontSize: '0.85rem',
-            color: '#888',
-          }}
-        >
+        <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
           ⏳ Uploaded files will be auto-deleted after 24 hours.
         </p>
       </div>
