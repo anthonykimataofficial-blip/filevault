@@ -75,7 +75,7 @@ app.use((req, res, next) => {
 const previewSecurity = (req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self'; sandbox allow-same-origin allow-scripts;"
+    "frame-ancestors 'self'; sandbox allow-same-origin allow-scripts allow-modals allow-forms;"
   );
   next();
 };
