@@ -63,7 +63,7 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ===== DOC/PDF/PPT (Sandboxed Google Viewer – Option 2) =====
+    // ===== DOCS/PDF/PPT =====
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -73,6 +73,7 @@ const PreviewPage = () => {
       const gviewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(
         safeUrl
       )}&embedded=true`;
+
       const driveUrl = `https://drive.google.com/viewerng/viewer?url=${encodeURIComponent(
         safeUrl
       )}&embedded=true`;
@@ -91,7 +92,7 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== Excel/CSV =====
+    // ===== EXCEL/CSV =====
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
@@ -108,6 +109,7 @@ const PreviewPage = () => {
       );
     }
 
+    // ===== IMAGES =====
     if (isImage) {
       return (
         <img
@@ -162,19 +164,62 @@ const PreviewPage = () => {
       );
     }
 
+    // ===== VIDEO (Protected) =====
     if (isVideo) {
       return (
-        <video controls style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}>
-          <source src={fileURL} type={`video/${lowerExt}`} />
-        </video>
+        <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
+          <video
+            controls
+            style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}
+            controlsList="nodownload noplaybackrate nofullscreen"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <source src={fileURL} type={`video/${lowerExt}`} />
+          </video>
+
+          {/* Overlay blocks clicking the 3-dots menu */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '70px',
+              height: '70px',
+              zIndex: 5,
+              background: 'transparent',
+            }}
+          />
+        </div>
       );
     }
 
+    // ===== AUDIO (Protected) =====
     if (isAudio) {
       return (
-        <audio controls style={{ width: '100%', zIndex: 2 }}>
-          <source src={fileURL} type={`audio/${lowerExt}`} />
-        </audio>
+        <div style={{ position: 'relative', width: '100%' }}>
+          <audio
+            controls
+            style={{ width: '100%', zIndex: 2 }}
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <source src={fileURL} type={`audio/${lowerExt}`} />
+          </audio>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '70px',
+              height: '40px',
+              zIndex: 5,
+              background: 'transparent',
+            }}
+          />
+        </div>
       );
     }
 
