@@ -75,10 +75,11 @@ app.use((req, res, next) => {
 const previewSecurity = (req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "frame-ancestors 'self'; sandbox allow-same-origin allow-scripts allow-modals allow-forms;"
+    "frame-ancestors 'self' https://docs.google.com; sandbox allow-same-origin allow-scripts allow-modals allow-forms;"
   );
   next();
 };
+
 
 // Apply CSP ONLY to preview-related endpoints
 app.use('/api/file', previewSecurity);
