@@ -14,7 +14,6 @@ function DownloadPage() {
     setSuccess(false);
 
     try {
-      // ✅ Use live backend in production and localhost for local dev
       const API_BASE =
         process.env.REACT_APP_API_URL ||
         "https://filevault-backend-a7w4.onrender.com";
@@ -29,9 +28,16 @@ function DownloadPage() {
       let filename = 'downloaded-file';
 
       if (contentDisposition) {
-        const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';\n]+)["']?/i);
-        if (match && match[1]) {
-          filename = decodeURIComponent(match[1]);
+        // 1️⃣ UTF-8 encoded filename*= field takes priority
+        const utf8Match = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
+        if (utf8Match && utf8Match[1]) {
+          filename = decodeURIComponent(utf8Match[1].trim().replace(/"/g, ''));
+        } else {
+          // 2️⃣ Standard filename="name.ext"
+          const stdMatch = contentDisposition.match(/filename="([^"]+)"/i);
+          if (stdMatch && stdMatch[1]) {
+            filename = stdMatch[1];
+          }
         }
       }
 
