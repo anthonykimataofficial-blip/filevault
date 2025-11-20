@@ -28,15 +28,16 @@ function DownloadPage() {
       let filename = 'downloaded-file';
 
       if (contentDisposition) {
-        // 1️⃣ UTF-8 encoded filename*= field takes priority
-        const utf8Match = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
-        if (utf8Match && utf8Match[1]) {
-          filename = decodeURIComponent(utf8Match[1].trim().replace(/"/g, ''));
+        // =============== FIXED FILENAME EXTRACTION ===============
+        // 1️⃣ Check filename* (UTF-8)
+        const utf8 = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
+        if (utf8 && utf8[1]) {
+          filename = decodeURIComponent(utf8[1].replace(/"/g, '').trim());
         } else {
-          // 2️⃣ Standard filename="name.ext"
-          const stdMatch = contentDisposition.match(/filename="([^"]+)"/i);
-          if (stdMatch && stdMatch[1]) {
-            filename = stdMatch[1];
+          // 2️⃣ Check standard filename="example.pdf"
+          const normal = contentDisposition.match(/filename="?([^"]+)"?/i);
+          if (normal && normal[1]) {
+            filename = normal[1].trim();
           }
         }
       }
@@ -87,7 +88,6 @@ function DownloadPage() {
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
 
-            {/* "Welcome to Vooli" - Hidden on mobile */}
             <div
               style={{
                 textAlign: 'center',
