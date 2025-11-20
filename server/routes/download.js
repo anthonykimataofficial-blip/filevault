@@ -38,12 +38,14 @@ router.post('/:id', async (req, res) => {
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
       res.setHeader('X-Content-Type-Options', 'nosniff');
 
-      // ======================================
-      //  FIX: Force correct filename on download
-      // ======================================
+      // ======================================================
+      //  ✅ OPTION A — Fully RFC-compatible filename handling
+      // ======================================================
+      const encodedName = encodeURIComponent(file.originalName);
+
       res.setHeader(
         'Content-Disposition',
-        `attachment; filename="${file.originalName}"`
+        `attachment; filename="${file.originalName}"; filename*=UTF-8''${encodedName}`
       );
 
       res.setHeader('Content-Type', file.fileType);
