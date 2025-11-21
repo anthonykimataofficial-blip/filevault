@@ -17,22 +17,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Multer temp storage — 🚀 no limits, no compression, pure disk storage
+// -------------------------------------
+// ✅ FORCE CLOUDINARY TO KEEP FILENAME
+// -------------------------------------
+const sanitize = (name) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+// Multer: keep original extension
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
+    const cleaned = sanitize(path.parse(file.originalname).name);
+    const ext = path.extname(file.originalname);
+    const finalName = `${cleaned}-${Date.now()}${ext}`;
+    cb(null, finalName);
   },
 });
 
-// ✅ Completely remove file size restriction
+// No upload limits
 const upload = multer({
   storage,
-  limits: {}, // no limit — let Render or Cloudinary decide
+  limits: {},
 });
 
-// ✅ Upload route
+// -------------------------------------
+// 🚀 Upload Route
+// -------------------------------------
 router.post('/', upload.single('file'), async (req, res) => {
   const { password } = req.body;
 
@@ -42,41 +51,51 @@ router.post('/', upload.single('file'), async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours expiry
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     console.log(`📤 Uploading "${req.file.originalname}" (${req.file.mimetype}, ${req.file.size} bytes)`);
 
-    // ✅ Upload to Cloudinary (auto handles large files)
+    // ----------------------------------------------------
+    // ☑️ CLOUDINARY Upload — KEEP ORIGINAL NAME EXACTLY
+    // ----------------------------------------------------
     let cloudResult;
     try {
       cloudResult = await cloudinary.uploader.upload(req.file.path, {
         resource_type: 'auto',
         folder: 'filevault_uploads',
+
+        // 🔥 These 2 lines FORCE Cloudinary to keep the original exact filename
         use_filename: true,
         unique_filename: false,
-        timeout: 1800000, // ⏱️ 30 minutes for very large files
-        chunk_size: 20 * 1024 * 1024, // upload in 20MB chunks
+
+        public_id: sanitize(path.parse(req.file.originalname).name),
+
+        timeout: 1800000,
+        chunk_size: 20 * 1024 * 1024,
       });
+
       console.log('✅ Cloudinary upload success:', cloudResult.secure_url);
     } catch (cloudErr) {
       console.error('❌ Cloudinary upload failed:', cloudErr.message);
     }
 
-    // ✅ Delete local temp file (to free space)
+    // Delete temp file
     try {
       fs.unlinkSync(req.file.path);
     } catch (cleanupErr) {
       console.warn('⚠️ Could not delete temp file:', cleanupErr.message);
     }
 
-    // ✅ Use Cloudinary link if available, fallback to local
+    // Use Cloudinary link if available
     const finalUrl = cloudResult?.secure_url
       ? cloudResult.secure_url
       : `${process.env.BACKEND_URL || 'https://filevault-backend-a7w4.onrender.com'}/files/${req.file.filename}`;
 
-    // ✅ Save metadata to MongoDB
+    // -------------------------------------
+    // 💾 Save Metadata
+    // -------------------------------------
     const file = new File({
-      originalName: req.file.originalname,
+      originalName: req.file.originalname, // <-- IMPORTANT for filename download
       storedName: cloudResult?.public_id || req.file.filename,
       fileType: req.file.mimetype,
       fileSize: req.file.size,
@@ -101,7 +120,7 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
-// ✅ Cloudinary health check
+// Cloudinary health check
 router.get('/check-cloudinary', async (req, res) => {
   try {
     const result = await cloudinary.api.ping();
