@@ -61,7 +61,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     let cloudResult;
     try {
       cloudResult = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: 'auto',
+        resource_type: 'raw',
         folder: 'filevault_uploads',
 
         // 🔥 These 2 lines FORCE Cloudinary to keep the original exact filename
