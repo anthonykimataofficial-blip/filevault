@@ -41,13 +41,14 @@ router.post('/:id', async (req, res) => {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('X-Content-Type-Options', 'nosniff');
 
-      // GUARANTEED FILE NAME FIX
+      // Correct filename ALWAYS enforced
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
       );
 
-      res.setHeader('Content-Type', file.fileType);
+      // IMPORTANT: Force proper filename handling
+      res.setHeader('Content-Type', 'application/octet-stream');
 
       return res.send(Buffer.from(response.data, 'binary'));
     }
@@ -61,10 +62,16 @@ router.post('/:id', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
-    // Guaranteed correct filename
-    return res.download(localPath, safeName, (err) => {
-      if (err) console.error('❌ Download error:', err.message);
-    });
+    // Force correct filename for ALL browsers
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
+    );
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    const fileStream = fs.createReadStream(localPath);
+    return fileStream.pipe(res);
 
   } catch (err) {
     console.error('❌ Download error:', err);
