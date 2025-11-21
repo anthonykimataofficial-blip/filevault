@@ -24,23 +24,25 @@ function DownloadPage() {
         { responseType: 'blob' }
       );
 
-      const contentDisposition = response.headers['content-disposition'];
+      const cd = response.headers['content-disposition'];
       let filename = 'downloaded-file';
 
-      if (contentDisposition) {
-        // =============== FIXED FILENAME EXTRACTION ===============
-        // 1️⃣ Check filename* (UTF-8)
-        const utf8 = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
+      if (cd) {
+        // Try UTF-8 filename* first
+        const utf8 = cd.match(/filename\*=(?:UTF-8'')?([^;\n]+)/i);
         if (utf8 && utf8[1]) {
           filename = decodeURIComponent(utf8[1].replace(/"/g, '').trim());
         } else {
-          // 2️⃣ Check standard filename="example.pdf"
-          const normal = contentDisposition.match(/filename="?([^"]+)"?/i);
+          // Standard filename=
+          const normal = cd.match(/filename="?([^"]+)"?/i);
           if (normal && normal[1]) {
             filename = normal[1].trim();
           }
         }
       }
+
+      // Final cleanup to remove weird characters
+      filename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
       const mimeType = response.headers['content-type'] || 'application/octet-stream';
       const blob = new Blob([response.data], { type: mimeType });
@@ -72,7 +74,7 @@ function DownloadPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* 🔹 Navbar */}
+      {/* Navbar */}
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
         <div className="container-fluid d-flex justify-content-between align-items-center">
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
@@ -87,33 +89,6 @@ function DownloadPage() {
               <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>vooli</div>
               <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
-
-            <div
-              style={{
-                textAlign: 'center',
-                width: '100%',
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                display: 'none',
-              }}
-              className="welcome-heading"
-            >
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: '2.5rem',
-                  fontWeight: '700',
-                  fontFamily: '"Baloo 2", cursive',
-                  color: '#fb5607',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-                }}
-              >
-                Welcome to Vooli
-              </h1>
-            </div>
           </span>
 
           <Link to="/" className="btn btn-primary">
@@ -122,7 +97,7 @@ function DownloadPage() {
         </div>
       </nav>
 
-      {/* 🔹 Download Form */}
+      {/* Password Form */}
       <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '75vh' }}>
         <div className="card p-4 shadow" style={{ maxWidth: '400px', width: '100%', background: '#ffffffdd' }}>
           <h5 className="card-title text-center mb-3">🔒 Enter Password to Download File</h5>
@@ -145,7 +120,7 @@ function DownloadPage() {
         </div>
       </div>
 
-      {/* 🔹 Footer */}
+      {/* Footer */}
       <footer style={{ textAlign: 'center', padding: '1rem' }}>
         <span
           style={{
@@ -161,18 +136,6 @@ function DownloadPage() {
           Powered by APIEN
         </span>
       </footer>
-
-      {/* 🔹 Responsive Styles */}
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&display=swap');
-          @media (min-width: 768px) {
-            .welcome-heading {
-              display: block !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 }
