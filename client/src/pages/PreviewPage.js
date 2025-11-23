@@ -93,19 +93,20 @@ const PreviewPage = () => {
             referrerPolicy="no-referrer"
           />
 
-          {/* 🔥 SECURITY SHIELD (Blocks "Open in reading mode") */}
+          {/* 🔥 SECURITY SHIELD (Blocks clicks but leaves scrollbar usable) */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
+              width: 'calc(100% - 20px)', // ⬅️ ONLY CHANGE MADE
               height: '100%',
               zIndex: 9999,
               background: 'transparent',
             }}
             onContextMenu={(e) => e.preventDefault()}
             onClick={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
           />
         </div>
       );
@@ -227,24 +228,20 @@ const PreviewPage = () => {
             <source src={fileURL} type={`audio/${lowerExt}`} />
           </audio>
 
-         <div
-  style={{
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 'calc(100% - 60px)', // allow scrollbar area
-    height: '100%',
-    zIndex: 5,
-    backgroundColor: 'transparent',
-    pointerEvents: 'auto',
-  }}
-  onContextMenu={(e) => e.preventDefault()}
-  onMouseDown={(e) => {
-    // Block all clicking inside iframe body
-    e.preventDefault();
-  }}
-/>
-
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 60px)',
+              height: '100%',
+              zIndex: 5,
+              backgroundColor: 'transparent',
+              pointerEvents: 'auto',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+          />
         </div>
       );
     }
