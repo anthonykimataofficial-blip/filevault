@@ -63,7 +63,9 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ===== DOCS/PDF/PPT =====
+    // ================================================
+    // 🔐 DOC/PDF/PPT (GOOGLE DOCS EXPLOIT FIX APPLIED)
+    // ================================================
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -81,14 +83,31 @@ const PreviewPage = () => {
       const viewerUrl = pdfError ? driveUrl : gviewUrl;
 
       return (
-        <iframe
-          src={viewerUrl}
-          onError={() => setPdfError(true)}
-          style={iframeStyle}
-          title="Document Preview"
-          sandbox="allow-same-origin allow-scripts allow-forms"
-          referrerPolicy="no-referrer"
-        />
+        <div style={{ position: 'relative' }}>
+          <iframe
+            src={viewerUrl}
+            onError={() => setPdfError(true)}
+            style={iframeStyle}
+            title="Document Preview"
+            sandbox="allow-same-origin allow-scripts allow-forms"
+            referrerPolicy="no-referrer"
+          />
+
+          {/* 🔥 SECURITY SHIELD (Blocks "Open in reading mode") */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: 9999,
+              background: 'transparent',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
+          />
+        </div>
       );
     }
 
@@ -148,6 +167,7 @@ const PreviewPage = () => {
             sandbox="allow-same-origin"
             referrerPolicy="no-referrer"
           />
+
           <div
             style={{
               position: 'absolute',
@@ -164,7 +184,7 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== VIDEO (Protected) =====
+    // ===== VIDEO =====
     if (isVideo) {
       return (
         <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
@@ -178,7 +198,6 @@ const PreviewPage = () => {
             <source src={fileURL} type={`video/${lowerExt}`} />
           </video>
 
-          {/* Overlay blocks clicking the 3-dots menu */}
           <div
             style={{
               position: 'absolute',
@@ -194,7 +213,7 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== AUDIO (Protected) =====
+    // ===== AUDIO =====
     if (isAudio) {
       return (
         <div style={{ position: 'relative', width: '100%' }}>
@@ -295,7 +314,6 @@ const PreviewPage = () => {
         </h2>
 
         <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
-          {/* Watermark */}
           <div
             style={{
               position: 'absolute',
@@ -322,7 +340,6 @@ const PreviewPage = () => {
             />
           </div>
 
-          {/* Preview */}
           <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
         </div>
 
