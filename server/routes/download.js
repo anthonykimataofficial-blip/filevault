@@ -6,10 +6,8 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Clean filenames for safety
-const sanitize = (name) => {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '_');
-};
+// Clean filename for safety
+const sanitize = (name) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 router.post('/:id', async (req, res) => {
   try {
@@ -21,57 +19,61 @@ router.post('/:id', async (req, res) => {
     const isMatch = await bcrypt.compare(password, file.password);
     if (!isMatch) return res.status(403).json({ error: 'Incorrect password' });
 
-    // -----------------------------
-    // 🚀 REAL FILENAME
-    // -----------------------------
-    const safeName = sanitize(file.originalName);       // e.g., "Report 2024.docx"
-    const encodedName = encodeURIComponent(safeName);   // URL-safe
+    const safeName = sanitize(file.originalName);
+    const encodedName = encodeURIComponent(safeName);
 
-    // Increment downloads
+    const isCloudinary = file.filePath.startsWith('http');
+
+    // Count download
     await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
 
-    const fileUrl = file.filePath;
-    const isCloudinary = fileUrl.startsWith('http');
+    // -----------------------------
+    // CLOUDINARY FILE DOWNLOAD
+    // -----------------------------
+    if (isCloudinary) {
+      const response = await axios({
+        url: file.filePath,
+        method: 'GET',
+        responseType: 'arraybuffer',
+      });
 
-    // CORS + security
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+
+      // CRITICAL FIX: send the actual MIME type
+      res.setHeader('Content-Type', file.fileType);
+
+      // Correct filename headers (Chrome, Firefox, Safari)
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
+      );
+
+      return res.send(Buffer.from(response.data, 'binary'));
+    }
+
+    // -----------------------------
+    // LOCAL FILE DOWNLOAD
+    // -----------------------------
+    const localPath = path.resolve(file.filePath);
+
+    if (!fs.existsSync(localPath)) {
+      return res.status(404).json({ error: 'Local file not found' });
+    }
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
-    // -----------------------------
-    // 🎯 THE CRITICAL FIX
-    // -----------------------------
+    // CRITICAL FIX: use real MIME type
+    res.setHeader('Content-Type', file.fileType);
+
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
     );
 
-    // Force browser to download, not preview
-    res.setHeader('Content-Type', 'application/octet-stream');
-
-    // --------------------------------
-    // ☁ CLOUDINARY FILE DOWNLOAD
-    // --------------------------------
-    if (isCloudinary) {
-      const response = await axios({
-        url: fileUrl,
-        method: 'GET',
-        responseType: 'arraybuffer'
-      });
-
-      return res.send(Buffer.from(response.data));
-    }
-
-    // --------------------------------
-    // 💾 LOCAL FILE DOWNLOAD
-    // --------------------------------
-    const localPath = path.resolve(file.filePath);
-
-    if (!fs.existsSync(localPath)) {
-      return res.status(404).json({ error: 'Local file missing from server' });
-    }
-
-    const fileStream = fs.createReadStream(localPath);
-    return fileStream.pipe(res);
+    const stream = fs.createReadStream(localPath);
+    return stream.pipe(res);
 
   } catch (err) {
     console.error('❌ Download error:', err);
