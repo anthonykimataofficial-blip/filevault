@@ -227,17 +227,24 @@ const PreviewPage = () => {
             <source src={fileURL} type={`audio/${lowerExt}`} />
           </audio>
 
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: '70px',
-              height: '40px',
-              zIndex: 5,
-              background: 'transparent',
-            }}
-          />
+         <div
+  style={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 'calc(100% - 60px)', // allow scrollbar area
+    height: '100%',
+    zIndex: 5,
+    backgroundColor: 'transparent',
+    pointerEvents: 'auto',
+  }}
+  onContextMenu={(e) => e.preventDefault()}
+  onMouseDown={(e) => {
+    // Block all clicking inside iframe body
+    e.preventDefault();
+  }}
+/>
+
         </div>
       );
     }
