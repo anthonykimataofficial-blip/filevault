@@ -6,12 +6,12 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Clean filenames safely
+// Sanitize filenames for maximum browser safety
 const sanitize = (name) => name.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-// --------------------------------------------------
-//  DOWNLOAD ROUTE
-// --------------------------------------------------
+// ----------------------------------------------------
+// 🚀 DOWNLOAD ROUTE
+// ----------------------------------------------------
 router.post('/:id', async (req, res) => {
   try {
     const { password } = req.body;
@@ -21,68 +21,61 @@ router.post('/:id', async (req, res) => {
       return res.status(404).json({ error: 'File not found or expired' });
     }
 
-    // Password check
+    // Validate password
     const isMatch = await bcrypt.compare(password, file.password);
     if (!isMatch) {
       return res.status(403).json({ error: 'Incorrect password' });
     }
 
-    // Use original filename EXACTLY — INCLUDING EXTENSION
-    const safeName = sanitize(file.originalName);
-    const encodedName = encodeURIComponent(safeName);
-
-    const fileUrl = file.filePath;
-    const isCloudinary = fileUrl.startsWith('http');
-
-    // Count download
+    // Increment download count
     await File.findByIdAndUpdate(req.params.id, { $inc: { downloads: 1 } });
 
-    // --------------------------------------------------
-    // CLOUDINARY DOWNLOAD (raw binary)
-    // --------------------------------------------------
-    if (isCloudinary) {
-      const response = await axios({
-        url: fileUrl,
-        method: 'GET',
-        responseType: 'arraybuffer',
+    // Prepare safe filename
+    const safeName = sanitize(file.originalName);
+    const encoded = encodeURIComponent(safeName);
+
+    const isCloud = file.filePath.startsWith("http");
+
+    // ----------------------------------------------------
+    // 🌩 CLOUDINARY DOWNLOAD
+    // ----------------------------------------------------
+    if (isCloud) {
+      const response = await axios.get(file.filePath, {
+        responseType: "arraybuffer",
       });
 
-      // Force browser to use OUR filename
       res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
+        "Content-Disposition",
+        `attachment; filename="${safeName}"; filename*=UTF-8''${encoded}`
       );
 
-      // Prevent Chrome/Safari overriding filename
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader("Content-Type", "application/octet-stream");
 
-      return res.send(Buffer.from(response.data, 'binary'));
+      return res.end(Buffer.from(response.data));
     }
 
-    // --------------------------------------------------
-    // LOCAL FILE DOWNLOAD
-    // --------------------------------------------------
+    // ----------------------------------------------------
+    // 🗂 LOCAL STORAGE DOWNLOAD
+    // ----------------------------------------------------
     const localPath = path.resolve(file.filePath);
 
     if (!fs.existsSync(localPath)) {
-      return res.status(404).json({ error: 'Local file not found on server' });
+      return res.status(404).json({ error: "File missing on server" });
     }
 
     res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${safeName}"; filename*=UTF-8''${encodedName}`
+      "Content-Disposition",
+      `attachment; filename="${safeName}"; filename*=UTF-8''${encoded}`
     );
 
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader("Content-Type", "application/octet-stream");
 
     const stream = fs.createReadStream(localPath);
     return stream.pipe(res);
 
   } catch (err) {
-    console.error('❌ Download error:', err);
-    return res.status(500).json({ error: 'Server error during download' });
+    console.error("❌ DOWNLOAD ERROR:", err);
+    res.status(500).json({ error: "Server error during download" });
   }
 });
 
