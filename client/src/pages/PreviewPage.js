@@ -339,25 +339,31 @@ const PreviewPage = () => {
             />
           </div>
 
-          {/* 🌈 SOFT RAINBOW SHIMMER (Middle Strip) */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 'calc(100% - 20px)',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 4,
-              background:
-                'linear-gradient(90deg, rgba(255,0,150,0) 0%, rgba(255,0,150,0.15) 50%, rgba(0,200,255,0) 100%)',
-              maskImage:
-                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 50%, transparent 100%)',
-              WebkitMaskImage:
-                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 50%, transparent 100%)',
-              animation: 'shimmerRainbow 4s linear infinite',
-            }}
-          />
+          {/* 🌈 SOFT RAINBOW SHIMMER (Middle Strip — Visible) */}
+<div
+  style={{
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 'calc(100% - 20px)',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: 4,
+
+    // Brighter multi-color sweep
+    background:
+      'linear-gradient(90deg, rgba(255,0,150,0) 0%, rgba(255,0,150,0.25) 40%, rgba(0,200,255,0.25) 60%, rgba(0,200,255,0) 100%)',
+
+    // Softer vertical fade so full sweep is visible
+    maskImage:
+      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.45) 55%, transparent 100%)',
+    WebkitMaskImage:
+      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.45) 55%, transparent 100%)',
+
+    animation: 'shimmerRainbow 3.5s linear infinite',
+  }}
+/>
+
 
           {/* Actual preview (iframe / img / etc) */}
           <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
@@ -401,9 +407,10 @@ const PreviewPage = () => {
       {/* ✨ SHIMMER ANIMATION KEYFRAMES */}
       <style>{`
         @keyframes shimmerRainbow {
-          0% { transform: translateX(-40%); }
-          100% { transform: translateX(40%); }
-        }
+  0% { transform: translateX(-80%); }
+  100% { transform: translateX(80%); }
+}
+
 
         @media (max-width: 768px) {
           iframe {
