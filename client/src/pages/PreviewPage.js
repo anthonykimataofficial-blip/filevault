@@ -63,9 +63,6 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ================================================
-    // 🔐 DOC/PDF/PPT (GOOGLE DOCS EXPLOIT FIX APPLIED)
-    // ================================================
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -93,13 +90,13 @@ const PreviewPage = () => {
             referrerPolicy="no-referrer"
           />
 
-          {/* 🔥 SECURITY SHIELD (Blocks clicks but leaves scrollbar usable) */}
+          {/* SECURITY SHIELD (does not touch scrollbar) */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: 'calc(100% - 20px)', // ⬅️ ONLY CHANGE MADE
+              width: 'calc(100% - 20px)',
               height: '100%',
               zIndex: 9999,
               background: 'transparent',
@@ -112,7 +109,6 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== EXCEL/CSV =====
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
@@ -129,7 +125,6 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== IMAGES =====
     if (isImage) {
       return (
         <img
@@ -147,7 +142,6 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== TEXT =====
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
@@ -185,7 +179,6 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== VIDEO =====
     if (isVideo) {
       return (
         <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
@@ -214,7 +207,6 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== AUDIO =====
     if (isAudio) {
       return (
         <div style={{ position: 'relative', width: '100%' }}>
@@ -317,7 +309,10 @@ const PreviewPage = () => {
           📄 {originalName}
         </h2>
 
+        {/* PREVIEW AREA */}
         <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
+
+          {/* ☁️ WATERMARK */}
           <div
             style={{
               position: 'absolute',
@@ -325,7 +320,7 @@ const PreviewPage = () => {
               left: 0,
               width: '100%',
               height: '100%',
-              zIndex: 5,
+              zIndex: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -344,6 +339,27 @@ const PreviewPage = () => {
             />
           </div>
 
+          {/* 🌈 SOFT RAINBOW SHIMMER (Middle Strip) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 20px)',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 4,
+              background:
+                'linear-gradient(90deg, rgba(255,0,150,0) 0%, rgba(255,0,150,0.15) 50%, rgba(0,200,255,0) 100%)',
+              maskImage:
+                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 50%, transparent 100%)',
+              WebkitMaskImage:
+                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 50%, transparent 100%)',
+              animation: 'shimmerRainbow 4s linear infinite',
+            }}
+          />
+
+          {/* Actual preview (iframe / img / etc) */}
           <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
         </div>
 
@@ -382,7 +398,13 @@ const PreviewPage = () => {
         </span>
       </footer>
 
+      {/* ✨ SHIMMER ANIMATION KEYFRAMES */}
       <style>{`
+        @keyframes shimmerRainbow {
+          0% { transform: translateX(-40%); }
+          100% { transform: translateX(40%); }
+        }
+
         @media (max-width: 768px) {
           iframe {
             height: 65vh !important;
