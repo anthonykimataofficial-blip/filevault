@@ -339,30 +339,31 @@ const PreviewPage = () => {
             />
           </div>
 
-          {/* 🌈 SOFT RAINBOW SHIMMER (Middle Strip — Visible) */}
+{/* ✨ CLEAN WHITE LIGHT SWEEP (Only on document area) */}
 <div
   style={{
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 'calc(100% - 20px)',
+    width: 'calc(100% - 20px)', // avoids the scrollbar
     height: '100%',
     pointerEvents: 'none',
     zIndex: 4,
 
-    // Brighter multi-color sweep
+    // Clean bright white sweep
     background:
-      'linear-gradient(90deg, rgba(255,0,150,0) 0%, rgba(255,0,150,0.25) 40%, rgba(0,200,255,0.25) 60%, rgba(0,200,255,0) 100%)',
+      'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%)',
 
-    // Softer vertical fade so full sweep is visible
+    // Fade top & bottom so it's not a harsh bar
     maskImage:
-      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.45) 55%, transparent 100%)',
+      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.75) 70%, transparent 100%)',
     WebkitMaskImage:
-      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.45) 55%, transparent 100%)',
+      'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.75) 70%, transparent 100%)',
 
-    animation: 'shimmerRainbow 3.5s linear infinite',
+    animation: 'lightSweep 2.8s linear infinite',
   }}
 />
+
 
 
           {/* Actual preview (iframe / img / etc) */}
@@ -406,9 +407,9 @@ const PreviewPage = () => {
 
       {/* ✨ SHIMMER ANIMATION KEYFRAMES */}
       <style>{`
-        @keyframes shimmerRainbow {
-  0% { transform: translateX(-80%); }
-  100% { transform: translateX(80%); }
+   @keyframes lightSweep {
+  0% { transform: translateX(-90%); }
+  100% { transform: translateX(90%); }
 }
 
 
