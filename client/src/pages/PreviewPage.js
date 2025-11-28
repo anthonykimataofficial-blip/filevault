@@ -32,11 +32,7 @@ const PreviewPage = () => {
         alert('🚫 Screenshots and printing are disabled on this page.');
       }
     };
-
-    // Prevent right-click context menu (Option B: only block right-click)
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-    };
+    const handleContextMenu = (e) => e.preventDefault();
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('contextmenu', handleContextMenu);
@@ -67,7 +63,9 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // Documents / PDFs / PPTs (we rely on the global contextmenu block — no click-blocking overlays)
+    // ================================================
+    // 🔐 DOC/PDF/PPT (GOOGLE DOCS EXPLOIT FIX APPLIED)
+    // ================================================
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -94,13 +92,27 @@ const PreviewPage = () => {
             sandbox="allow-same-origin allow-scripts allow-forms"
             referrerPolicy="no-referrer"
           />
-          {/* Note: intentionally no overlay that blocks clicks — right-click is already prevented globally.
-              This preserves toolbar interactions (zoom, navigation) while preventing contextmenu. */}
+
+          {/* 🔥 SECURITY SHIELD (Blocks clicks but leaves scrollbar usable) */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 20px)', // ⬅️ ONLY CHANGE MADE
+              height: '100%',
+              zIndex: 9999,
+              background: 'transparent',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+          />
         </div>
       );
     }
 
-    // Excel / CSV
+    // ===== EXCEL/CSV =====
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
@@ -117,7 +129,7 @@ const PreviewPage = () => {
       );
     }
 
-    // Images
+    // ===== IMAGES =====
     if (isImage) {
       return (
         <img
@@ -135,7 +147,7 @@ const PreviewPage = () => {
       );
     }
 
-    // Plain text
+    // ===== TEXT =====
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
@@ -156,11 +168,24 @@ const PreviewPage = () => {
             sandbox="allow-same-origin"
             referrerPolicy="no-referrer"
           />
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 20px)',
+              height: '100%',
+              zIndex: 3,
+              backgroundColor: 'transparent',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+          />
         </div>
       );
     }
 
-    // Video
+    // ===== VIDEO =====
     if (isVideo) {
       return (
         <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
@@ -169,15 +194,27 @@ const PreviewPage = () => {
             style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}
             controlsList="nodownload noplaybackrate nofullscreen"
             disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()} // block right-click only on video controls/frame
+            onContextMenu={(e) => e.preventDefault()}
           >
             <source src={fileURL} type={`video/${lowerExt}`} />
           </video>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '70px',
+              height: '70px',
+              zIndex: 5,
+              background: 'transparent',
+            }}
+          />
         </div>
       );
     }
 
-    // Audio
+    // ===== AUDIO =====
     if (isAudio) {
       return (
         <div style={{ position: 'relative', width: '100%' }}>
@@ -186,10 +223,25 @@ const PreviewPage = () => {
             style={{ width: '100%', zIndex: 2 }}
             controlsList="nodownload noplaybackrate"
             disablePictureInPicture
-            onContextMenu={(e) => e.preventDefault()} // prevent right-click on audio controls but allow clicks/plays
+            onContextMenu={(e) => e.preventDefault()}
           >
             <source src={fileURL} type={`audio/${lowerExt}`} />
           </audio>
+
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 'calc(100% - 60px)',
+              height: '100%',
+              zIndex: 5,
+              backgroundColor: 'transparent',
+              pointerEvents: 'auto',
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+          />
         </div>
       );
     }
@@ -265,13 +317,7 @@ const PreviewPage = () => {
           📄 {originalName}
         </h2>
 
-        {/* PREVIEW AREA */}
-        <div
-          style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}
-          // right-click prevention applied globally; keeping this here in case you want local control later
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {/* WATERMARK (behind shimmer) */}
+        <div style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}>
           <div
             style={{
               position: 'absolute',
@@ -279,7 +325,7 @@ const PreviewPage = () => {
               left: 0,
               width: '100%',
               height: '100%',
-              zIndex: 3,
+              zIndex: 5,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -298,45 +344,6 @@ const PreviewPage = () => {
             />
           </div>
 
-          {/* SOFT LIGHT SWEEP (Middle strip) — normal light sweep, not rainbow
-              pointerEvents: 'none' ensures it doesn't block clicks.
-              width is slightly narrower (middle strip) and the mask fades top/bottom.
-              using translateX animation so sweep stays within preview area. */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              // leave room for iframe scrollbar (doesn't touch scrollbar area)
-              width: 'calc(100% - 20px)',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 4,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <div
-              aria-hidden
-              style={{
-                position: 'absolute',
-                width: '36%', // middle strip width — adjust to make sweep narrower/wider
-                height: '70%', // covers the vertical middle portion
-                transform: 'translateX(-200%)', // starting off-screen (animation will move it across)
-                background:
-                  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%)',
-                borderRadius: '999px',
-                mixBlendMode: 'overlay',
-                opacity: 0.55, // subtle shimmer
-                maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.6) 75%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.6) 75%, transparent 100%)',
-                animation: 'lightSweep 2.8s linear infinite',
-              }}
-            />
-          </div>
-
-          {/* Actual preview (iframe / img / video / audio / etc) */}
           <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
         </div>
 
@@ -375,14 +382,7 @@ const PreviewPage = () => {
         </span>
       </footer>
 
-      {/* SHIMMER ANIMATION KEYFRAMES */}
       <style>{`
-        @keyframes lightSweep {
-          0% { transform: translateX(-200%); }
-          50% { transform: translateX(0%); }
-          100% { transform: translateX(200%); }
-        }
-
         @media (max-width: 768px) {
           iframe {
             height: 65vh !important;
