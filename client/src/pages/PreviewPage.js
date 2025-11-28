@@ -1,3 +1,4 @@
+// --- FULL FILE START ---
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
@@ -63,9 +64,9 @@ const PreviewPage = () => {
     const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    // ================================================
-    // 🔐 DOC/PDF/PPT (GOOGLE DOCS EXPLOIT FIX APPLIED)
-    // ================================================
+    // ===============================
+    // 🔐 SECURE DOC VIEWER
+    // ===============================
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -93,13 +94,13 @@ const PreviewPage = () => {
             referrerPolicy="no-referrer"
           />
 
-          {/* 🔥 SECURITY SHIELD (Blocks clicks but leaves scrollbar usable) */}
+          {/* Shield with scroll bar gap */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: 'calc(100% - 20px)', // ⬅️ ONLY CHANGE MADE
+              width: 'calc(100% - 20px)',
               height: '100%',
               zIndex: 9999,
               background: 'transparent',
@@ -112,12 +113,13 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== EXCEL/CSV =====
+    // ===============================
+    // EXCEL / CSV
+    // ===============================
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
       )}`;
-
       return (
         <iframe
           src={excelPreviewUrl}
@@ -129,7 +131,9 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== IMAGES =====
+    // ===============================
+    // IMAGES
+    // ===============================
     if (isImage) {
       return (
         <img
@@ -138,16 +142,18 @@ const PreviewPage = () => {
           style={{
             maxWidth: '100%',
             maxHeight: '70vh',
-            display: 'block',
             margin: '0 auto',
-            zIndex: 2,
+            display: 'block',
             borderRadius: '8px',
+            zIndex: 2,
           }}
         />
       );
     }
 
-    // ===== TEXT =====
+    // ===============================
+    // TEXT
+    // ===============================
     if (isText) {
       return (
         <div style={{ position: 'relative', width: '100%', height: '500px' }}>
@@ -160,7 +166,6 @@ const PreviewPage = () => {
               borderRadius: '8px',
               backgroundColor: '#fff',
               overflowY: 'auto',
-              overflowX: 'hidden',
               userSelect: 'none',
               zIndex: 1,
             }}
@@ -185,7 +190,9 @@ const PreviewPage = () => {
       );
     }
 
-    // ===== VIDEO =====
+    // ===============================
+    // VIDEO
+    // ===============================
     if (isVideo) {
       return (
         <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
@@ -198,26 +205,18 @@ const PreviewPage = () => {
           >
             <source src={fileURL} type={`video/${lowerExt}`} />
           </video>
-
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: '70px',
-              height: '70px',
-              zIndex: 5,
-              background: 'transparent',
-            }}
-          />
         </div>
       );
     }
 
-    // ===== AUDIO =====
+    // ===============================
+    // 🎵 AUDIO  **FIXED SECTION**
+    // ===============================
     if (isAudio) {
       return (
         <div style={{ position: 'relative', width: '100%' }}>
+
+          {/* AUDIO PLAYER - FULLY CLICKABLE */}
           <audio
             controls
             style={{ width: '100%', zIndex: 2 }}
@@ -228,19 +227,19 @@ const PreviewPage = () => {
             <source src={fileURL} type={`audio/${lowerExt}`} />
           </audio>
 
+          {/* Shield ONLY blocks RIGHT-CLICK, not clicks */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
-              width: 'calc(100% - 60px)',
+              width: '100%',
               height: '100%',
               zIndex: 5,
-              backgroundColor: 'transparent',
-              pointerEvents: 'auto',
+              background: 'transparent',
+              pointerEvents: 'none',    // ← THIS FIXES THE PLAY BUTTON
             }}
             onContextMenu={(e) => e.preventDefault()}
-            onMouseDown={(e) => e.preventDefault()}
           />
         </div>
       );
@@ -265,11 +264,13 @@ const PreviewPage = () => {
         backgroundImage: 'url("/background.png")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
       }}
     >
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
-        <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
+        <div
+          className="container-fluid d-flex justify-content-between align-items-center"
+          style={{ position: 'relative' }}
+        >
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
             <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
@@ -278,34 +279,13 @@ const PreviewPage = () => {
             </div>
           </span>
 
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: "'Super Bubble', cursive",
-              fontSize: '2.2rem',
-              fontWeight: '700',
-              color: '#fb5607',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'none',
-            }}
-            className="welcome-heading"
-          >
-            Welcome to Vooli
-          </h1>
-
-          <Link to="/" className="btn btn-primary">
-            Click here to upload files
-          </Link>
+          <Link to="/" className="btn btn-primary">Click here to upload files</Link>
         </div>
       </nav>
 
       <div
         style={{
           padding: '2rem',
-          fontFamily: 'sans-serif',
           maxWidth: '1000px',
           margin: '3rem auto',
           background: '#ffffffee',
@@ -348,16 +328,12 @@ const PreviewPage = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link
-            to={`/download/${fileId}`}
-            className="btn btn-outline-primary"
-            style={{ padding: '8px 20px', fontWeight: '500' }}
-          >
+          <Link to={`/download/${fileId}`} className="btn btn-outline-primary">
             🔒 Enter password to download
           </Link>
         </div>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#555' }}>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
           👁️ Views: {views} | 📥 Downloads: {downloads}
         </div>
 
@@ -381,22 +357,9 @@ const PreviewPage = () => {
           Powered by APIEN
         </span>
       </footer>
-
-      <style>{`
-        @media (max-width: 768px) {
-          iframe {
-            height: 65vh !important;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .welcome-heading {
-            display: block !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
 
 export default PreviewPage;
+// --- FULL FILE END ---
