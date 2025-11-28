@@ -316,7 +316,7 @@ const PreviewPage = () => {
               src="/logo.png"
               alt="Watermark"
               style={{
-                opacity: 0.25,
+                opacity: 0.35,
                 maxWidth: '85%',
                 maxHeight: '85%',
                 objectFit: 'contain',
