@@ -11,9 +11,7 @@ const PreviewPage = () => {
     const fetchFile = async () => {
       try {
         const API_BASE =
-          process.env.REACT_APP_API_URL ||
-          'https://filevault-backend-a7w4.onrender.com';
-
+          process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
         const res = await fetch(`${API_BASE}/api/file/${fileId}`);
         if (!res.ok) throw new Error('File not found or expired');
         const data = await res.json();
@@ -31,10 +29,14 @@ const PreviewPage = () => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey && e.key === 's') || (e.ctrlKey && e.key === 'p')) {
         e.preventDefault();
-        alert('🚫 Screenshots and printing are disabled.');
+        alert('🚫 Screenshots and printing are disabled on this page.');
       }
     };
-    const handleContextMenu = (e) => e.preventDefault();
+
+    // Prevent right-click context menu (Option B: only block right-click)
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('contextmenu', handleContextMenu);
@@ -49,36 +51,23 @@ const PreviewPage = () => {
   if (!fileData) return <h2 style={{ textAlign: 'center' }}>Loading...</h2>;
 
   const { originalName, ext, url, views, downloads } = fileData;
-
   const lowerExt = ext
     ? ext.split('.').pop().trim().toLowerCase()
     : url?.split('.').pop().split('?')[0].trim().toLowerCase();
 
   const API_BASE =
-    process.env.REACT_APP_API_URL ||
-    'https://filevault-backend-a7w4.onrender.com';
-  const fileURL = url.startsWith('http')
-    ? url
-    : `${API_BASE}/files/${url}`;
-
-  const iframeStyle = {
-    width: '100%',
-    height: '80vh',
-    border: 'none',
-    backgroundColor: '#fff',
-    zIndex: 2,
-    borderRadius: '10px',
-  };
+    process.env.REACT_APP_API_URL || 'https://filevault-backend-a7w4.onrender.com';
+  const fileURL = url.startsWith('http') ? url : `${API_BASE}/files/${url}`;
 
   const renderPreview = () => {
-    const isDocType = ['pdf', 'doc', 'docx', 'pptx'].includes(lowerExt);
-    const isExcel = ['xlsx', 'xls', 'csv'].includes(lowerExt);
+    const isDocType = ['pdf', 'docx', 'doc', 'pptx'].includes(lowerExt);
+    const isExcel = ['xls', 'xlsx', 'csv'].includes(lowerExt);
     const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(lowerExt);
     const isText = lowerExt === 'txt';
-    const isVideo = ['mp4', 'mov', 'avi', 'mpeg'].includes(lowerExt);
+    const isVideo = ['mp4', 'mpeg', 'mov', 'avi'].includes(lowerExt);
     const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(lowerExt);
 
-    /* ---------------- DOC / PDF ---------------- */
+    // Documents / PDFs / PPTs (we rely on the global contextmenu block — no click-blocking overlays)
     if (isDocType) {
       const isCloud = fileURL.startsWith('https://res.cloudinary.com');
       const safeUrl = isCloud
@@ -93,36 +82,25 @@ const PreviewPage = () => {
         safeUrl
       )}&embedded=true`;
 
+      const viewerUrl = pdfError ? driveUrl : gviewUrl;
+
       return (
         <div style={{ position: 'relative' }}>
           <iframe
-            src={pdfError ? driveUrl : gviewUrl}
+            src={viewerUrl}
             onError={() => setPdfError(true)}
             style={iframeStyle}
-            title="Document Viewer"
-            sandbox="allow-same-origin allow-scripts"
+            title="Document Preview"
+            sandbox="allow-same-origin allow-scripts allow-forms"
             referrerPolicy="no-referrer"
           />
-
-          {/* Shield that blocks right-click only (not clicks / not scrollbar) */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 'calc(100% - 20px)',
-              height: '100%',
-              zIndex: 10,
-              background: 'transparent',
-              pointerEvents: 'none',
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-          />
+          {/* Note: intentionally no overlay that blocks clicks — right-click is already prevented globally.
+              This preserves toolbar interactions (zoom, navigation) while preventing contextmenu. */}
         </div>
       );
     }
 
-    /* ---------------- Excel ---------------- */
+    // Excel / CSV
     if (isExcel) {
       const excelPreviewUrl = `${API_BASE}/api/preview-excel?url=${encodeURIComponent(
         fileURL
@@ -133,13 +111,13 @@ const PreviewPage = () => {
           src={excelPreviewUrl}
           style={iframeStyle}
           title="Excel Preview"
-          sandbox="allow-same-origin allow-scripts"
+          sandbox="allow-same-origin allow-scripts allow-forms"
           referrerPolicy="no-referrer"
         />
       );
     }
 
-    /* ---------------- IMAGES ---------------- */
+    // Images
     if (isImage) {
       return (
         <img
@@ -148,62 +126,84 @@ const PreviewPage = () => {
           style={{
             maxWidth: '100%',
             maxHeight: '70vh',
-            margin: '0 auto',
             display: 'block',
-            borderRadius: '10px',
+            margin: '0 auto',
+            zIndex: 2,
+            borderRadius: '8px',
           }}
         />
       );
     }
 
-    /* ---------------- TEXT ---------------- */
+    // Plain text
     if (isText) {
       return (
-        <iframe
-          src={fileURL}
-          style={{
-            width: '100%',
-            height: '500px',
-            border: '1px solid #ccc',
-            borderRadius: '10px',
-            background: '#fff',
-          }}
-          title="Text Viewer"
-          sandbox="allow-same-origin"
-        />
+        <div style={{ position: 'relative', width: '100%', height: '500px' }}>
+          <iframe
+            src={fileURL}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              backgroundColor: '#fff',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              userSelect: 'none',
+              zIndex: 1,
+            }}
+            title="Text Preview"
+            sandbox="allow-same-origin"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       );
     }
 
-    /* ---------------- VIDEO ---------------- */
+    // Video
     if (isVideo) {
       return (
-        <video
-          controls
-          style={{ width: '100%', maxHeight: '70vh' }}
-          controlsList="nodownload"
-          disablePictureInPicture
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <source src={fileURL} />
-        </video>
+        <div style={{ position: 'relative', width: '100%', maxHeight: '70vh' }}>
+          <video
+            controls
+            style={{ width: '100%', maxHeight: '70vh', zIndex: 2 }}
+            controlsList="nodownload noplaybackrate nofullscreen"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()} // block right-click only on video controls/frame
+          >
+            <source src={fileURL} type={`video/${lowerExt}`} />
+          </video>
+        </div>
       );
     }
 
-    /* ---------------- AUDIO ---------------- */
+    // Audio
     if (isAudio) {
       return (
-        <audio
-          controls
-          style={{ width: '100%' }}
-          controlsList="nodownload"
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          <source src={fileURL} />
-        </audio>
+        <div style={{ position: 'relative', width: '100%' }}>
+          <audio
+            controls
+            style={{ width: '100%', zIndex: 2 }}
+            controlsList="nodownload noplaybackrate"
+            disablePictureInPicture
+            onContextMenu={(e) => e.preventDefault()} // prevent right-click on audio controls but allow clicks/plays
+          >
+            <source src={fileURL} type={`audio/${lowerExt}`} />
+          </audio>
+        </div>
       );
     }
 
-    return <p>Preview not available for this file type.</p>;
+    return <p>⚠️ Preview not available for this file type.</p>;
+  };
+
+  const iframeStyle = {
+    width: '100%',
+    height: '80vh',
+    border: 'none',
+    backgroundColor: '#fff',
+    zIndex: 2,
+    borderRadius: '10px',
   };
 
   return (
@@ -212,29 +212,48 @@ const PreviewPage = () => {
         minHeight: '100vh',
         backgroundImage: 'url("/background.png")',
         backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Navbar */}
       <nav className="navbar navbar-light bg-light shadow-sm px-3">
-        <div className="container-fluid d-flex justify-content-between align-items-center">
+        <div className="container-fluid d-flex justify-content-between align-items-center" style={{ position: 'relative' }}>
           <span className="navbar-brand mb-0 h1 d-flex align-items-center">
-            <img src="/logo.png" width="60" height="60" alt="logo" className="me-2" />
+            <img src="/logo.png" alt="Logo" width="60" height="60" className="me-2" />
             <div>
-              <strong>vooli</strong>
-              <div style={{ fontSize: '.9rem', color: '#666' }}>protect your ideas</div>
+              <div style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>vooli</div>
+              <div style={{ fontSize: '1rem', color: '#555' }}>protect your ideas</div>
             </div>
           </span>
 
+          <h1
+            style={{
+              margin: 0,
+              fontFamily: "'Super Bubble', cursive",
+              fontSize: '2.2rem',
+              fontWeight: '700',
+              color: '#fb5607',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'none',
+            }}
+            className="welcome-heading"
+          >
+            Welcome to Vooli
+          </h1>
+
           <Link to="/" className="btn btn-primary">
-            Upload new file
+            Click here to upload files
           </Link>
         </div>
       </nav>
 
-      {/* Main container */}
       <div
         style={{
           padding: '2rem',
+          fontFamily: 'sans-serif',
           maxWidth: '1000px',
           margin: '3rem auto',
           background: '#ffffffee',
@@ -242,17 +261,24 @@ const PreviewPage = () => {
           boxShadow: '0 0 20px rgba(0,0,0,0.1)',
         }}
       >
-        <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', fontWeight: '600' }}>
           📄 {originalName}
         </h2>
 
         {/* PREVIEW AREA */}
-        <div style={{ position: 'relative', width: '100%' }}>
-          {/* Watermark */}
+        <div
+          style={{ position: 'relative', width: '100%', marginBottom: '1rem' }}
+          // right-click prevention applied globally; keeping this here in case you want local control later
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          {/* WATERMARK (behind shimmer) */}
           <div
             style={{
               position: 'absolute',
-              inset: 0,
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
               zIndex: 3,
               display: 'flex',
               alignItems: 'center',
@@ -263,59 +289,110 @@ const PreviewPage = () => {
             <img
               src="/logo.png"
               alt="Watermark"
-              style={{ opacity: 0.28, maxWidth: '80%' }}
+              style={{
+                opacity: 0.25,
+                maxWidth: '85%',
+                maxHeight: '85%',
+                objectFit: 'contain',
+              }}
             />
           </div>
 
-          {/* Rainbow strip only over document area */}
+          {/* SOFT LIGHT SWEEP (Middle strip) — normal light sweep, not rainbow
+              pointerEvents: 'none' ensures it doesn't block clicks.
+              width is slightly narrower (middle strip) and the mask fades top/bottom.
+              using translateX animation so sweep stays within preview area. */}
           <div
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
+              // leave room for iframe scrollbar (doesn't touch scrollbar area)
               width: 'calc(100% - 20px)',
               height: '100%',
-              zIndex: 4,
               pointerEvents: 'none',
-              background:
-                'linear-gradient(90deg, rgba(255,0,150,0) 0%, rgba(255,0,150,0.35) 40%, rgba(0,200,255,0.35) 60%, rgba(0,200,255,0) 100%)',
-              maskImage:
-                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.4) 60%, transparent 100%)',
-              WebkitMaskImage:
-                'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.4) 60%, transparent 100%)',
-              animation: 'shimmerRainbow 3s linear infinite',
+              zIndex: 4,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
-          />
-
-          <div style={{ position: 'relative', zIndex: 2 }}>
-            {renderPreview()}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                width: '36%', // middle strip width — adjust to make sweep narrower/wider
+                height: '70%', // covers the vertical middle portion
+                transform: 'translateX(-200%)', // starting off-screen (animation will move it across)
+                background:
+                  'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 50%, rgba(255,255,255,0) 100%)',
+                borderRadius: '999px',
+                mixBlendMode: 'overlay',
+                opacity: 0.55, // subtle shimmer
+                maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.6) 75%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 25%, rgba(0,0,0,0.6) 75%, transparent 100%)',
+                animation: 'lightSweep 2.8s linear infinite',
+              }}
+            />
           </div>
+
+          {/* Actual preview (iframe / img / video / audio / etc) */}
+          <div style={{ position: 'relative', zIndex: 2 }}>{renderPreview()}</div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link to={`/download/${fileId}`} className="btn btn-outline-primary">
+          <Link
+            to={`/download/${fileId}`}
+            className="btn btn-outline-primary"
+            style={{ padding: '8px 20px', fontWeight: '500' }}
+          >
             🔒 Enter password to download
           </Link>
         </div>
 
-        <p style={{ marginTop: '1rem', textAlign: 'center', color: '#555' }}>
-          👁️ {views} views • 📥 {downloads} downloads
-        </p>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem', color: '#555' }}>
+          👁️ Views: {views} | 📥 Downloads: {downloads}
+        </div>
 
-        <p style={{ textAlign: 'center', fontSize: '.85rem', color: '#888' }}>
-          ⏳ Auto-deletes after 24 hours.
+        <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
+          ⏳ Uploaded files will be auto-deleted after 24 hours.
         </p>
       </div>
 
       <footer style={{ textAlign: 'center', padding: '1rem' }}>
-        Powered by APIEN
+        <span
+          style={{
+            backgroundColor: '#fff',
+            padding: '0.5rem 1rem',
+            borderRadius: '999px',
+            fontWeight: 'bold',
+            boxShadow: '0 0 8px rgba(0,0,0,0.1)',
+            display: 'inline-block',
+            color: '#333',
+          }}
+        >
+          Powered by APIEN
+        </span>
       </footer>
 
-      {/* Animations */}
+      {/* SHIMMER ANIMATION KEYFRAMES */}
       <style>{`
-        @keyframes shimmerRainbow {
-          0% { transform: translateX(-80%); }
-          100% { transform: translateX(80%); }
+        @keyframes lightSweep {
+          0% { transform: translateX(-200%); }
+          50% { transform: translateX(0%); }
+          100% { transform: translateX(200%); }
+        }
+
+        @media (max-width: 768px) {
+          iframe {
+            height: 65vh !important;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .welcome-heading {
+            display: block !important;
+          }
         }
       `}</style>
     </div>
